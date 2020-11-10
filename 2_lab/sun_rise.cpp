@@ -22,7 +22,7 @@ void init() {
 
 int main(int argc, char **argv) {
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 
     glutInitWindowSize(500, 500);
     glutInitWindowPosition(100, 100);
@@ -73,11 +73,20 @@ void render_scene() {
 void draw_house(){
     // house
     glColor3ub( 145, 30, 66);
-    glBegin(GL_TRIANGLES);
-        glVertex2f(-0.45f, 0.15f);
-        glVertex2f(-0.2f, -0.2f);
-        glVertex2f(-0.7f, -0.2f);
-    glEnd();
+
+    GLfloat verts[6];
+    verts[0] = -0.45f;
+    verts[1] = 0.15f;
+    verts[2] = -0.2f;
+    verts[3] = -0.2f;
+    verts[4] = -0.7f;
+    verts[5] = -0.2f;
+
+    glEnableClientState( GL_VERTEX_ARRAY );
+    glVertexPointer(2, GL_FLOAT, 0, verts);
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDisableClientState( GL_VERTEX_ARRAY );
 
     glColor3ub( 255, 0, 14);
     glRectf(-0.7f, -0.7f, -0.2f, -0.2f);
@@ -133,12 +142,20 @@ void ground() {
         glColor3f(0, 154, 0);
     }
 
-    glBegin(GL_QUADS);
-    glVertex2f(-1.0f, 0.0f);
-    glVertex2f(1.0f, 0.0f);
-    glVertex2f(1.0f, -1.0f);
-    glVertex2f(-1.0f, -1.0f);
-    glEnd();
+    GLfloat verts[8];
+    verts[0] = -1.0f;
+    verts[1] = 0.0f;
+    verts[2] = 1.0f;
+    verts[3] = 0.0f;
+    verts[4] = 1.0f;
+    verts[5] = -1.0f;
+    verts[6] = -1.0f;
+    verts[7] = -1.0f;
+
+    glEnableClientState( GL_VERTEX_ARRAY );
+    glVertexPointer( 2, GL_FLOAT, 0, verts );
+    glDrawArrays( GL_QUADS, 0, 4);
+    glDisableClientState( GL_VERTEX_ARRAY );
 
     draw_house();
     // не ждём пока отрисуется кадр,
