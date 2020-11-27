@@ -5,8 +5,10 @@ void changeSize(int w, int h);
 
 void ground();
 
-void draw_sun(bool=false);
+void draw_sun(bool= false);
+
 void draw_house();
+
 void sky();
 
 void timer(int);
@@ -15,24 +17,21 @@ void render_scene();
 
 void init() {
     glClearColor(0, 0, (float) 110 / 255, 0);
-
-    glFlush();
 }
 
 
 int main(int argc, char **argv) {
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 
     glutInitWindowSize(500, 500);
     glutInitWindowPosition(100, 100);
     glutCreateWindow("Sunrise");
 
-    glutDisplayFunc(render_scene);
-    glutReshapeFunc(changeSize);
+    glutDisplayFunc(render_scene); // redraw
+    glutReshapeFunc(changeSize);  // resize
 
-    glShadeModel(GL_SMOOTH);
-    glutTimerFunc(200, timer, 0);
+    glutTimerFunc(50, timer, 0);
     init();
     glutMainLoop();
 
@@ -44,7 +43,6 @@ GLfloat x_sun_pos = -1.0f;
 
 void render_scene() {
     glClear(GL_COLOR_BUFFER_BIT);
-    glLoadIdentity();
 
     if (night) {
         // drawing a Crescent
@@ -70,16 +68,18 @@ void render_scene() {
     glutSwapBuffers();
 }
 
-void draw_house(){
-    // house
-    glColor3ub( 145, 30, 66);
+void draw_house() {
+    // house roof
+    glColor3ub(145, 30, 66);
+
     glBegin(GL_TRIANGLES);
         glVertex2f(-0.45f, 0.15f);
         glVertex2f(-0.2f, -0.2f);
         glVertex2f(-0.7f, -0.2f);
     glEnd();
 
-    glColor3ub( 255, 0, 14);
+    // house foundation
+    glColor3ub(255, 0, 14);
     glRectf(-0.7f, -0.7f, -0.2f, -0.2f);
 
     // window
@@ -89,7 +89,6 @@ void draw_house(){
         glColor3f(255.0f, 242.0f, 0.0f);
 
     glRectf(-0.6f, -0.4f, -0.3f, -0.3f);
-    glFlush();
 }
 
 void sky() {
@@ -143,12 +142,12 @@ void ground() {
     draw_house();
     // не ждём пока отрисуется кадр,
     // а идём сразу к вычислениям окружности
-    glFlush();
+//    glFlush();
 }
 
 void timer(int= 0) {
     glutPostRedisplay();
-    glutTimerFunc(200, timer, 0);
+    glutTimerFunc(50, timer, 0);
 
     if (x_sun_pos >= 1.1) {
         x_sun_pos = -1.0;
@@ -156,10 +155,10 @@ void timer(int= 0) {
             night = false;
         else {
             night = true;
-            glClearColor(0,0,0,0);
+            glClearColor(0, 0, 0, 0);
         }
     } else {
-        x_sun_pos += 0.1;
+        x_sun_pos += 0.03;
     }
 }
 
