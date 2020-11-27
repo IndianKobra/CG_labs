@@ -4,9 +4,7 @@
 #define WIN_WIDTH 750
 
 GLfloat ox_rotation = 0;
-//GLfloat dx_rotation = 0.5;
-//GLfloat oy_rotation = 0;
-//GLfloat dy_rotation = 0;
+
 GLuint cube; // cube display list
 
 GLfloat sun_rotation = 1;
@@ -145,6 +143,18 @@ void Draw() {
     //  Octahedron
     draw_colored_oct();
 
+    //  sphere
+    glLoadIdentity();
+    glTranslatef (0, 0, -12);  // сторона камеры
+    glRotatef((sun_rotation), 0, 1, 0);
+    glTranslatef (0, 0, -10);  // сторона октаэдра
+
+    GLUquadricObj *quadObj;
+    quadObj = gluNewQuadric();
+    glColor3d(1,1,0);
+    gluQuadricDrawStyle(quadObj, GLU_LINE);
+    gluSphere(quadObj, 0.5, 10, 10);
+
 
     glutSwapBuffers();
 }
@@ -218,7 +228,7 @@ void timer(int = 0) {
     glutPostRedisplay();
     glutTimerFunc(10, timer, 1);
     ox_rotation += 0.5;
-//    oy_rotation += dy_rotation;
+
     if (sun_mode != 0)
         sun_rotation += dx_sun_rotation;
 }
