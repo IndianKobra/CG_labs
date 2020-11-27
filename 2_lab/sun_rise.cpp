@@ -5,10 +5,8 @@ void changeSize(int w, int h);
 
 void ground();
 
-void draw_sun(bool= false);
-
+void draw_sun(bool=false);
 void draw_house();
-
 void sky();
 
 void timer(int);
@@ -17,6 +15,8 @@ void render_scene();
 
 void init() {
     glClearColor(0, 0, (float) 110 / 255, 0);
+
+    glFlush();
 }
 
 
@@ -28,11 +28,11 @@ int main(int argc, char **argv) {
     glutInitWindowPosition(100, 100);
     glutCreateWindow("Sunrise");
 
-    glutDisplayFunc(render_scene); // redraw
-    glutReshapeFunc(changeSize); // resize
+    glutDisplayFunc(render_scene);
+    glutReshapeFunc(changeSize);
 
     glShadeModel(GL_SMOOTH);
-    glutTimerFunc(50, timer, 0);
+    glutTimerFunc(200, timer, 0);
     init();
     glutMainLoop();
 
@@ -44,6 +44,7 @@ GLfloat x_sun_pos = -1.0f;
 
 void render_scene() {
     glClear(GL_COLOR_BUFFER_BIT);
+    glLoadIdentity();
 
     if (night) {
         // drawing a Crescent
@@ -69,24 +70,25 @@ void render_scene() {
     glutSwapBuffers();
 }
 
-void draw_house() {
-    // house roof
-    glColor3ub(145, 30, 66);
+void draw_house(){
+    // house
+    glColor3ub( 145, 30, 66);
 
-    GLfloat vertices[] = {
-            -0.45f, 0.15f,
-            -0.2f, -0.2f,
-            -0.7f, -0.2f
-    };
+    GLfloat verts[6];
+    verts[0] = -0.45f;
+    verts[1] = 0.15f;
+    verts[2] = -0.2f;
+    verts[3] = -0.2f;
+    verts[4] = -0.7f;
+    verts[5] = -0.2f;
 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(2, GL_FLOAT, 0, vertices);
+    glEnableClientState( GL_VERTEX_ARRAY );
+    glVertexPointer(2, GL_FLOAT, 0, verts);
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
-    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState( GL_VERTEX_ARRAY );
 
-    // house foundation
-    glColor3ub(255, 0, 14);
+    glColor3ub( 255, 0, 14);
     glRectf(-0.7f, -0.7f, -0.2f, -0.2f);
 
     // window
@@ -96,6 +98,7 @@ void draw_house() {
         glColor3f(255.0f, 242.0f, 0.0f);
 
     glRectf(-0.6f, -0.4f, -0.3f, -0.3f);
+    glFlush();
 }
 
 void sky() {
@@ -128,6 +131,8 @@ void draw_sun(bool crescent) {
     }
 
     glEnd();
+
+    glFlush();
 }
 
 void ground() {
@@ -137,24 +142,30 @@ void ground() {
         glColor3f(0, 154, 0);
     }
 
-    GLfloat verts[] = {
-            -1.0f, 0.0f,
-            1.0f, 0.0f,
-            1.0f, -1.0f,
-            -1.0f, -1.0f
-    };
+    GLfloat verts[8];
+    verts[0] = -1.0f;
+    verts[1] = 0.0f;
+    verts[2] = 1.0f;
+    verts[3] = 0.0f;
+    verts[4] = 1.0f;
+    verts[5] = -1.0f;
+    verts[6] = -1.0f;
+    verts[7] = -1.0f;
 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(2, GL_FLOAT, 0, verts);
-    glDrawArrays(GL_QUADS, 0, 4);
-    glDisableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState( GL_VERTEX_ARRAY );
+    glVertexPointer( 2, GL_FLOAT, 0, verts );
+    glDrawArrays( GL_QUADS, 0, 4);
+    glDisableClientState( GL_VERTEX_ARRAY );
 
     draw_house();
+    // не ждём пока отрисуется кадр,
+    // а идём сразу к вычислениям окружности
+    glFlush();
 }
 
 void timer(int= 0) {
     glutPostRedisplay();
-    glutTimerFunc(50, timer, 0);
+    glutTimerFunc(200, timer, 0);
 
     if (x_sun_pos >= 1.1) {
         x_sun_pos = -1.0;
@@ -162,10 +173,10 @@ void timer(int= 0) {
             night = false;
         else {
             night = true;
-            glClearColor(0, 0, 0, 0);
+            glClearColor(0,0,0,0);
         }
     } else {
-        x_sun_pos += 0.03;
+        x_sun_pos += 0.1;
     }
 }
 
@@ -173,9 +184,9 @@ void changeSize(int w, int h) {
     glViewport(0, 0, (GLsizei) w, (GLsizei) h);
 
     glMatrixMode(GL_PROJECTION);
-    // matrix nullification
+    // обнуляем матрицу
     glLoadIdentity();
     gluOrtho2D(-1.0, 1.0, -1.0, 1.0);
-    // return to the matrix projection
+    // вернуться к матрице проекции
     glMatrixMode(GL_MODELVIEW);
 }
