@@ -1,4 +1,5 @@
 #include <GL/glut.h>
+#include "SOIL.h"
 
 #define WIN_HEIGHT 750
 #define WIN_WIDTH 750
@@ -9,6 +10,7 @@ GLuint cube; // cube display list
 
 GLfloat sun_rotation = 1;
 GLfloat dx_sun_rotation = 1;
+GLfloat light_pos [] = {0, 0, 0, 1};
 int sun_mode = 1;
 
 void draw_cube();
@@ -22,7 +24,6 @@ void draw_colored_oct() {
 
     glTranslatef(0, 0, -5); // перемещаем объект по z для "вытягивания" октаэдра
     glRotatef((ox_rotation), 0, 1, 0);
-//    glRotatef((oy_rotation), 1, 0, 0);
 
     GLfloat oct_vertices[] = {
             -2.0f, 0.0f, 0.0f, //0 передняя грань
@@ -53,9 +54,9 @@ void draw_colored_oct() {
             0.0f, -2.0f, 0.0f, //5
             0.0f, 0.0f, -2.0f, //4
 
-            0.0f, 0.0f, -2.0f, //4 нижняя левая  грань
-            0.0f, -2.0f, 0.0f, //5
-            -2.0f, 0.0f, 0.0f, //0
+//            0.0f, 0.0f, -2.0f, //4 нижняя левая  грань
+//            0.0f, -2.0f, 0.0f, //5
+//            -2.0f, 0.0f, 0.0f, //0
     };
 
     GLfloat oct_normals[] = {
@@ -105,26 +106,41 @@ void draw_colored_oct() {
     GLubyte lower_front[] = {12, 13, 14};         // нижняя передняя грань
     GLubyte bottom_right_side[] = {15, 16, 17};   // нижняя правая грань
     GLubyte lower_back_face[] = {18, 19, 20};     // нижняя задняя грань
-    GLubyte bottom_left_side[] = {21, 22, 23};    // нижняя левая грань
+//    GLubyte bottom_left_side[] = {21, 22, 23};    // нижняя левая грань
 
 
     // отрисовка цвета граней
     glEnable(GL_COLOR_MATERIAL);
     glColor4f(0.00, 0.32, 0.48, 0.5);
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
-    glColor4f(0.18, 0.4, 0.32, 0.5);
-    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_left_side);
+
+//    glColor4f(0.18, 0.4, 0.32, 0.5);
+    glShadeModel(GL_SMOOTH);
+    glBegin(GL_TRIANGLES);
+
+    glColor4f(1.0, 0.0, 0.0, 0.5);
+    glVertex3d(0.0f, 0.0f, -2.0f);
+
+    glColor4f(0.0, 1.0, 0.0, 0.5);
+    glVertex3d(0.0f, -2.0f, 0.0f);
+
+    glColor4f(0.0, 0.0, 1.0, 0.5);
+    glVertex3d(-2.0f, 0.0f, 0.0f);
+
+    glEnd();
+//    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_left_side);
+
     glColor4f(0.32, 0.16, 0.36, 0.5);
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_right_side);
     glColor4f(0.82, 0.21, 0.0, 0.5);
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_front);
     glColor4f(1.0, 1.0, 1.0, 0.5);
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, back_face);
-    glColor4f(1.0, 0.0, 0.0, 0.5);
+    glColor4f(0.0, 1.0, 0.0, 0.5);
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, front_face);
     glColor4f(1.0, 0.0, 1.0, 0.5);
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, right_side);
-    glColor4f(0.0, 1.0, 0.0, 0.5);
+    glColor4f(1.0, 0.0, 0.0, 0.5);
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, left_side);
 }
 
@@ -133,12 +149,12 @@ void Draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // visibility
-    glEnable(GL_BLEND);
-    glDepthMask(GL_FALSE);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//    glEnable(GL_BLEND);
+//    glDepthMask(GL_FALSE);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // grid
-    glCallList(cube);
+//    glCallList(cube);
 
     //  Octahedron
     draw_colored_oct();
@@ -148,6 +164,8 @@ void Draw() {
     glTranslatef (0, 0, -12);  // сторона камеры
     glRotatef((sun_rotation), 0, 1, 0);
     glTranslatef (0, 0, -10);  // сторона октаэдра
+
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
 
     GLUquadricObj *quadObj;
     quadObj = gluNewQuadric();
@@ -159,9 +177,19 @@ void Draw() {
     glutSwapBuffers();
 }
 
+void init(){
+    glEnable(GL_DEPTH_TEST);
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+}
+
 int main(int argc, char **argv) {
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 
     glutInitWindowSize(WIN_WIDTH, WIN_HEIGHT);
     glutCreateWindow("Octahedron");
@@ -173,12 +201,15 @@ int main(int argc, char **argv) {
     glutReshapeFunc(change_size);
     glutTimerFunc(5, timer, 0);
 
+    init();
     glutMainLoop();
     return 0;
 }
 
+/**
+ * Rendering grid
+ * */
 void draw_cube() {
-    // rendering grid
     glLoadIdentity();
 
     glNewList(cube, GL_COMPILE);
@@ -226,7 +257,7 @@ void change_size(GLsizei w, GLsizei h) {
 
 void timer(int = 0) {
     glutPostRedisplay();
-    glutTimerFunc(10, timer, 1);
+    glutTimerFunc(13, timer, 1);
     ox_rotation += 0.5;
 
     if (sun_mode != 0)
