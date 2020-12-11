@@ -1,17 +1,23 @@
 #include <GL/glut.h>
+#include <iostream>
 #include "SOIL.h"
 
 #define WIN_HEIGHT 750
 #define WIN_WIDTH 750
 
-GLfloat ox_rotation = 0;
+//GLfloat ox_rotation = 0;
 
 GLuint cube; // cube display list
 
 GLfloat sun_rotation = 1;
 GLfloat dx_sun_rotation = 1;
-GLfloat light_pos [] = {0, 0, 0, 1};
-int sun_mode = 1;
+GLfloat light_pos[] = {0, 0, 1, 1};
+GLfloat opened = 0; // раздвигание граней куба
+
+GLfloat ox_rotation = 0;
+GLfloat dx_rotation = 0.5;
+GLfloat oy_rotation = 0;
+GLfloat dy_rotation = 0;
 
 void draw_cube();
 
@@ -19,44 +25,144 @@ void change_size(GLsizei, GLsizei);
 
 void timer(int);
 
+void draw_colored_oct();
+
+
+void Draw() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // visibility
+//    glEnable(GL_BLEND);
+//    glDepthMask(GL_FALSE);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // grid
+//    glCallList(cube);
+
+    //  Octahedron
+    draw_colored_oct();
+
+    // light and sphere
+    glLoadIdentity();
+    glTranslatef(0, 0, -12);  // сторона камеры
+    glRotatef((sun_rotation), 0, 1, 0);
+    glTranslatef(0, 0, -10);  // сторона октаэдра
+
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+
+    GLUquadricObj *quadObj;
+    quadObj = gluNewQuadric();
+    glColor3d(1, 1, 0);
+    gluQuadricDrawStyle(quadObj, GLU_LINE);
+    gluSphere(quadObj, 0.5, 10, 10);
+
+    glutSwapBuffers();
+}
+
+void glutNormalKeys(unsigned char key, int x, int y) {
+    switch (key) {
+        case 'w':
+            dy_rotation = -0.5;
+            break;
+        case 'a':
+            dx_rotation = -0.5;
+            break;
+        case 's':
+            dy_rotation = 0.5;
+            break;
+        case 'd':
+            dx_rotation = 0.5;
+            break;
+        case 'q':
+            dy_rotation = 0;
+            dx_rotation = 0;
+            break;
+        case 'o':
+            if (!opened)
+                opened = 0.2;
+            else
+                opened = 0;
+            break;
+        default:
+            break;
+    }
+}
+
+void init() {
+    glEnable(GL_DEPTH_TEST);
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+}
+
+int main(int argc, char **argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+
+    glutInitWindowSize(WIN_WIDTH, WIN_HEIGHT);
+    glutCreateWindow("Octahedron");
+
+//    cube = glGenLists(1);
+//    draw_cube();
+    std::cout << "w - turn up\n"
+                 "s - turn down\n"
+                 "a - turn left\n"
+                 "d - turn right\n"
+                 "q - stop rotation\n"
+                 "o - open octahedron";
+
+    glutDisplayFunc(Draw);
+    glutReshapeFunc(change_size);
+    glutTimerFunc(5, timer, 0);
+
+    // control panel
+    glutKeyboardFunc(glutNormalKeys);
+
+    init();
+    glutMainLoop();
+
+    return 0;
+}
+
 void draw_colored_oct() {
     glLoadIdentity();
 
     glTranslatef(0, 0, -5); // перемещаем объект по z для "вытягивания" октаэдра
     glRotatef((ox_rotation), 0, 1, 0);
+    glRotatef((oy_rotation), 1, 0, 0);
 
     GLfloat oct_vertices[] = {
-            -2.0f, 0.0f, 0.0f, //0 передняя грань
-            0.0f, 2.0f, 0.0f,  //1
-            0.0f, 0.0f, 2.0f,  //2
+            -2.0f - opened, 0.0f + opened, 0.0f + opened, //0 передняя грань
+            0.0f - opened, 2.0f + opened, 0.0f + opened,  //1
+            0.0f - opened, 0.0f + opened, 2.0f + opened,  //2
 
-            0.0f, 0.0f, 2.0f,  //2 правая боковая
-            0.0f, 2.0f, 0.0f,  //1
-            2.0f, 0.0f, 0.0f,  //3
+            0.0f + opened, 0.0f + opened, 2.0f + opened,  //2 правая боковая
+            0.0f + opened, 2.0f + opened, 0.0f + opened,  //1
+            2.0f + opened, 0.0f + opened, 0.0f + opened,  //3
 
-            2.0f, 0.0f, 0.0f,  //3 задняя грань
-            0.0f, 2.0f, 0.0f,  //1
-            0.0f, 0.0f, -2.0f, //4
+            2.0f + opened, 0.0f + opened, 0.0f - opened,  //3 задняя грань
+            0.0f + opened, 2.0f + opened, 0.0f - opened,  //1
+            0.0f + opened, 0.0f + opened, -2.0f - opened, //4
 
-            0.0f, 0.0f, -2.0f, //4 левая боковая
-            0.0f, 2.0f, 0.0f,  //1
-            -2.0f, 0.0f, 0.0f, //0
+            0.0f - opened, 0.0f + opened, -2.0f - opened, //4 левая боковая
+            0.0f - opened, 2.0f + opened, 0.0f - opened,  //1
+            -2.0f - opened, 0.0f + opened, 0.0f - opened, //0
 
-            -2.0f, 0.0f, 0.0f, //0 нижняя передняя грань
-            0.0f, -2.0f, 0.0f, //5
-            0.0f, 0.0f, 2.0f,  //2
+            -2.0f - opened, 0.0f - opened, 0.0f + opened, //0 нижняя передняя грань
+            0.0f - opened, -2.0f - opened, 0.0f + opened, //5
+            0.0f - opened, 0.0f - opened, 2.0f + opened,  //2
 
-            0.0f, 0.0f, 2.0f,  //2 нижняя правая грань
-            0.0f, -2.0f, 0.0f, //5
-            2.0f, 0.0f, 0.0f,  //3
+            0.0f + opened, 0.0f - opened, 2.0f + opened,  //2 нижняя правая грань
+            0.0f + opened, -2.0f - opened, 0.0f + opened, //5
+            2.0f + opened, 0.0f - opened, 0.0f + opened,  //3
 
-            2.0f, 0.0f, 0.0f,  //3 нижняя задняя грань
-            0.0f, -2.0f, 0.0f, //5
-            0.0f, 0.0f, -2.0f, //4
-
-//            0.0f, 0.0f, -2.0f, //4 нижняя левая  грань
-//            0.0f, -2.0f, 0.0f, //5
-//            -2.0f, 0.0f, 0.0f, //0
+            2.0f + opened, 0.0f - opened, 0.0f - opened,  //3 нижняя задняя грань
+            0.0f + opened, -2.0f - opened, 0.0f - opened, //5
+            0.0f + opened, 0.0f - opened, -2.0f - opened, //4
     };
 
     GLfloat oct_normals[] = {
@@ -106,29 +212,26 @@ void draw_colored_oct() {
     GLubyte lower_front[] = {12, 13, 14};         // нижняя передняя грань
     GLubyte bottom_right_side[] = {15, 16, 17};   // нижняя правая грань
     GLubyte lower_back_face[] = {18, 19, 20};     // нижняя задняя грань
-//    GLubyte bottom_left_side[] = {21, 22, 23};    // нижняя левая грань
-
 
     // отрисовка цвета граней
     glEnable(GL_COLOR_MATERIAL);
     glColor4f(0.00, 0.32, 0.48, 0.5);
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
 
-//    glColor4f(0.18, 0.4, 0.32, 0.5);
+    // нижняя левая  грань
     glShadeModel(GL_SMOOTH);
     glBegin(GL_TRIANGLES);
 
     glColor4f(1.0, 0.0, 0.0, 0.5);
-    glVertex3d(0.0f, 0.0f, -2.0f);
+    glVertex3d(0.0f - opened, 0.0f - opened, -2.0f - opened);
 
     glColor4f(0.0, 1.0, 0.0, 0.5);
-    glVertex3d(0.0f, -2.0f, 0.0f);
+    glVertex3d(0.0f - opened, -2.0f - opened, 0.0f - opened);
 
     glColor4f(0.0, 0.0, 1.0, 0.5);
-    glVertex3d(-2.0f, 0.0f, 0.0f);
+    glVertex3d(-2.0f - opened, 0.0f - opened, 0.0f - opened);
 
     glEnd();
-//    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_left_side);
 
     glColor4f(0.32, 0.16, 0.36, 0.5);
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_right_side);
@@ -142,68 +245,6 @@ void draw_colored_oct() {
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, right_side);
     glColor4f(1.0, 0.0, 0.0, 0.5);
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, left_side);
-}
-
-
-void Draw() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // visibility
-//    glEnable(GL_BLEND);
-//    glDepthMask(GL_FALSE);
-//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    // grid
-//    glCallList(cube);
-
-    //  Octahedron
-    draw_colored_oct();
-
-    //  sphere
-    glLoadIdentity();
-    glTranslatef (0, 0, -12);  // сторона камеры
-    glRotatef((sun_rotation), 0, 1, 0);
-    glTranslatef (0, 0, -10);  // сторона октаэдра
-
-    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-
-    GLUquadricObj *quadObj;
-    quadObj = gluNewQuadric();
-    glColor3d(1,1,0);
-    gluQuadricDrawStyle(quadObj, GLU_LINE);
-    gluSphere(quadObj, 0.5, 10, 10);
-
-
-    glutSwapBuffers();
-}
-
-void init(){
-    glEnable(GL_DEPTH_TEST);
-
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glEnable(GL_COLOR_MATERIAL);
-    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-}
-
-int main(int argc, char **argv) {
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-
-    glutInitWindowSize(WIN_WIDTH, WIN_HEIGHT);
-    glutCreateWindow("Octahedron");
-
-    cube = glGenLists(1);
-    draw_cube();
-
-    glutDisplayFunc(Draw);
-    glutReshapeFunc(change_size);
-    glutTimerFunc(5, timer, 0);
-
-    init();
-    glutMainLoop();
-    return 0;
 }
 
 /**
@@ -258,8 +299,9 @@ void change_size(GLsizei w, GLsizei h) {
 void timer(int = 0) {
     glutPostRedisplay();
     glutTimerFunc(13, timer, 1);
-    ox_rotation += 0.5;
 
-    if (sun_mode != 0)
-        sun_rotation += dx_sun_rotation;
+    ox_rotation += dx_rotation;
+    oy_rotation += dy_rotation;
+
+    sun_rotation += dx_sun_rotation;
 }
