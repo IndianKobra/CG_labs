@@ -5,9 +5,7 @@
 #define WIN_HEIGHT 750
 #define WIN_WIDTH 750
 
-//GLfloat ox_rotation = 0;
-
-GLuint cube; // cube display list
+GLuint textures[8];
 
 GLfloat sun_rotation = 1;
 GLfloat dx_sun_rotation = 1;
@@ -19,8 +17,6 @@ GLfloat dx_rotation = 0.5;
 GLfloat oy_rotation = 0;
 GLfloat dy_rotation = 0;
 
-void draw_cube();
-
 void change_size(GLsizei, GLsizei);
 
 void timer(int);
@@ -31,13 +27,6 @@ void draw_colored_oct();
 void Draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // visibility
-//    glEnable(GL_BLEND);
-//    glDepthMask(GL_FALSE);
-//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    // grid
-//    glCallList(cube);
 
     //  Octahedron
     draw_colored_oct();
@@ -97,6 +86,52 @@ void init() {
 
     glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
+    // textures initialization
+    int width[8], height[8];
+    glGenTextures(8, textures);
+
+    unsigned char *image0 = SOIL_load_image("../textures/txt1.bmp", &width[0],
+                                            &height[0], nullptr, SOIL_LOAD_RGB);
+    unsigned char *image1 = SOIL_load_image("../textures/txt2.bmp",
+                                            &width[1], &height[1], nullptr,
+                                            SOIL_LOAD_RGB);
+    unsigned char *image2 = SOIL_load_image("../textures/txt3.bmp",
+                                            &width[2], &height[2], nullptr,
+                                            SOIL_LOAD_RGB);
+    unsigned char *image3 = SOIL_load_image("../textures/txt4.bmp",
+                                            &width[3], &height[3], nullptr,
+                                            SOIL_LOAD_RGB);
+    unsigned char *image4 = SOIL_load_image("../textures/txt5.bmp",
+                                            &width[4], &height[4], nullptr,
+                                            SOIL_LOAD_RGB);
+    unsigned char *image5 = SOIL_load_image("../textures/txt6.bmp",
+                                            &width[5], &height[5], nullptr,
+                                            SOIL_LOAD_RGB);
+    unsigned char *image6 = SOIL_load_image("../textures/txt7.bmp",
+                                            &width[6], &height[6], nullptr,
+                                            SOIL_LOAD_RGB);
+    unsigned char *image7 = SOIL_load_image("../textures/txt8.bmp",
+                                            &width[7], &height[7], nullptr,
+                                            SOIL_LOAD_RGB);
+
+    unsigned char *images[8] = {image0, image1, image2, image3, image4, image5, image6, image7};
+
+    for (int i = 0; i < 8; i++) {
+        glBindTexture(GL_TEXTURE_2D, textures[i]); // "привязываем" текстуру
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width[i], height[i],
+                     0, GL_RGB, GL_UNSIGNED_BYTE, images[i]); // генерируем структуру
+
+        // Рендреинг текстуры
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // если меньше - увеличить
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // если больше - уменьшить
+    }
+
+    // Освобождение памяти и отвязка объекта текстуры
+    for (auto &image : images) {
+        SOIL_free_image_data(image);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
 }
 
 int main(int argc, char **argv) {
@@ -106,8 +141,6 @@ int main(int argc, char **argv) {
     glutInitWindowSize(WIN_WIDTH, WIN_HEIGHT);
     glutCreateWindow("Octahedron");
 
-//    cube = glGenLists(1);
-//    draw_cube();
     std::cout << "w - turn up\n"
                  "s - turn down\n"
                  "a - turn left\n"
@@ -245,41 +278,6 @@ void draw_colored_oct() {
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, right_side);
     glColor4f(1.0, 0.0, 0.0, 0.5);
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, left_side);
-}
-
-/**
- * Rendering grid
- * */
-void draw_cube() {
-    glLoadIdentity();
-
-    glNewList(cube, GL_COMPILE);
-    glTranslatef(0, 0, 10);
-    glColor4f(1.0, 0.0, 0.0, 1.0);
-
-    for (int i = 0; i < 31; i++) {
-        glBegin(GL_LINE_LOOP);
-        glVertex3f(-30, 30 - i * 2, 30);
-        glVertex3f(30, 30 - i * 2, 30);
-        glVertex3f(30, 30 - i * 2, -30);
-        glVertex3f(-30, 30 - i * 2, -30);
-        glEnd();
-
-        glBegin(GL_LINE_LOOP);
-        glVertex3f(30 - i * 2, 30, 30);
-        glVertex3f(30 - i * 2, -30, 30);
-        glVertex3f(30 - i * 2, -30, -30);
-        glVertex3f(30 - i * 2, 30, -30);
-        glEnd();
-
-        glBegin(GL_LINE_LOOP);
-        glVertex3f(-30, 30, 30 - i * 2);
-        glVertex3f(30, 30, 30 - i * 2);
-        glVertex3f(30, -30, 30 - i * 2);
-        glVertex3f(-30, -30, 30 - i * 2);
-        glEnd();
-    }
-    glEndList();
 }
 
 void change_size(GLsizei w, GLsizei h) {
