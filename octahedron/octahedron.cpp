@@ -1,5 +1,6 @@
 #include <GL/glut.h>
 #include <iostream>
+#include <sstream>
 #include "SOIL.h"
 
 #define WIN_HEIGHT 750
@@ -10,7 +11,9 @@ GLuint textures[8];
 GLfloat sun_rotation = 1;
 GLfloat dx_sun_rotation = 1;
 GLfloat light_pos[] = {0, 0, 1, 1};
+
 GLfloat opened = 0; // раздвигание граней куба
+int texture_mode = 2;
 
 GLfloat ox_rotation = 0;
 GLfloat dx_rotation = 0.5;
@@ -78,6 +81,9 @@ void glutNormalKeys(unsigned char key, int x, int y) {
 }
 
 void init() {
+    // textures initialization
+
+
     glEnable(GL_DEPTH_TEST);
 
     glEnable(GL_LIGHTING);
@@ -86,52 +92,6 @@ void init() {
 
     glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-
-    // textures initialization
-    int width[8], height[8];
-    glGenTextures(8, textures);
-
-    unsigned char *image0 = SOIL_load_image("../textures/txt1.bmp", &width[0],
-                                            &height[0], nullptr, SOIL_LOAD_RGB);
-    unsigned char *image1 = SOIL_load_image("../textures/txt2.bmp",
-                                            &width[1], &height[1], nullptr,
-                                            SOIL_LOAD_RGB);
-    unsigned char *image2 = SOIL_load_image("../textures/txt3.bmp",
-                                            &width[2], &height[2], nullptr,
-                                            SOIL_LOAD_RGB);
-    unsigned char *image3 = SOIL_load_image("../textures/txt4.bmp",
-                                            &width[3], &height[3], nullptr,
-                                            SOIL_LOAD_RGB);
-    unsigned char *image4 = SOIL_load_image("../textures/txt5.bmp",
-                                            &width[4], &height[4], nullptr,
-                                            SOIL_LOAD_RGB);
-    unsigned char *image5 = SOIL_load_image("../textures/txt6.bmp",
-                                            &width[5], &height[5], nullptr,
-                                            SOIL_LOAD_RGB);
-    unsigned char *image6 = SOIL_load_image("../textures/txt7.bmp",
-                                            &width[6], &height[6], nullptr,
-                                            SOIL_LOAD_RGB);
-    unsigned char *image7 = SOIL_load_image("../textures/txt8.bmp",
-                                            &width[7], &height[7], nullptr,
-                                            SOIL_LOAD_RGB);
-
-    unsigned char *images[8] = {image0, image1, image2, image3, image4, image5, image6, image7};
-
-    for (int i = 0; i < 8; i++) {
-        glBindTexture(GL_TEXTURE_2D, textures[i]); // "привязываем" текстуру
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width[i], height[i],
-                     0, GL_RGB, GL_UNSIGNED_BYTE, images[i]); // генерируем структуру
-
-        // Рендреинг текстуры
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // если меньше - увеличить
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // если больше - уменьшить
-    }
-
-    // Освобождение памяти и отвязка объекта текстуры
-    for (auto &image : images) {
-        SOIL_free_image_data(image);
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
 }
 
 int main(int argc, char **argv) {
@@ -148,12 +108,35 @@ int main(int argc, char **argv) {
                  "q - stop rotation\n"
                  "o - open octahedron";
 
+
+    // control panel
+    glutKeyboardFunc(glutNormalKeys);
     glutDisplayFunc(Draw);
     glutReshapeFunc(change_size);
     glutTimerFunc(5, timer, 0);
 
-    // control panel
-    glutKeyboardFunc(glutNormalKeys);
+
+
+    int width[8], height[8];
+    glGenTextures(8, textures);
+    unsigned char *images[8];
+    std::stringstream filename;
+    for(int i = 0; i < 8; i++)
+    {
+        filename << "../textures/txt" << i << ".bmp";
+        std::cout << filename.str();
+        images[i] = SOIL_load_image(filename.str().c_str(), &width[i], &height[i], 0,SOIL_LOAD_RGB);
+
+        glBindTexture(GL_TEXTURE_2D, textures[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width[i], height[i], 0, GL_RGB, GL_UNSIGNED_BYTE, images[i]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        filename.str("");
+    }
+    for(int i = 0 ; i < 8; i++)
+    {
+        SOIL_free_image_data(images[i]);
+    }
 
     init();
     glutMainLoop();
@@ -196,6 +179,10 @@ void draw_colored_oct() {
             2.0f + opened, 0.0f - opened, 0.0f - opened,  //3 нижняя задняя грань
             0.0f + opened, -2.0f - opened, 0.0f - opened, //5
             0.0f + opened, 0.0f - opened, -2.0f - opened, //4
+
+            0.0f - opened, 0.0f - opened, -2.0f - opened, // нижняя левая грань
+            0.0f - opened, -2.0f - opened, 0.0f - opened,
+            -2.0f - opened, 0.0f - opened, 0.0f - opened,
     };
 
     GLfloat oct_normals[] = {
@@ -232,8 +219,37 @@ void draw_colored_oct() {
             -1.0f, -1.0f, -1.0f,
     };
 
+
+    GLfloat texCoords[] = { 0.0, 0.0,  // Нижний левый угол
+                            1.0, 0.0,  // Нижний правый угол
+                            0.5, 1.0,  // верхняя центральная сторона
+                            0.0, 0.0,
+                            1.0, 0.0,
+                            0.5, 1.0,
+                            0.0, 0.0,
+                            1.0, 0.0,
+                            0.5, 1.0,
+                            0.0, 0.0,
+                            1.0, 0.0,
+                            0.5, 1.0,
+                            0.0, 0.0,
+                            1.0, 0.0,
+                            0.5, 1.0,
+                            0.0, 0.0,
+                            1.0, 0.0,
+                            0.5, 1.0,
+                            0.0, 0.0,
+                            1.0, 0.0,
+                            0.5, 1.0,
+                            0.0, 0.0,
+                            1.0, 0.0,
+                            0.5, 1.0,};
+
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
 
     glVertexPointer(3, GL_FLOAT, 0, oct_vertices);
     glNormalPointer(GL_FLOAT, 0, oct_normals);
@@ -245,39 +261,69 @@ void draw_colored_oct() {
     GLubyte lower_front[] = {12, 13, 14};         // нижняя передняя грань
     GLubyte bottom_right_side[] = {15, 16, 17};   // нижняя правая грань
     GLubyte lower_back_face[] = {18, 19, 20};     // нижняя задняя грань
+    GLubyte bottom_left_side[] = {21, 22, 23};    // нижняя левая грань
 
-    // отрисовка цвета граней
-    glEnable(GL_COLOR_MATERIAL);
-    glColor4f(0.00, 0.32, 0.48, 0.5);
-    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
+    if (texture_mode == 0) {
+        // отрисовка цвета граней
+        glEnable(GL_COLOR_MATERIAL);
+        glColor4f(0.00, 0.32, 0.48, 0.5);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
 
-    // нижняя левая  грань
-    glShadeModel(GL_SMOOTH);
-    glBegin(GL_TRIANGLES);
+        // нижняя левая  грань цвета ЛГБТ(запрещено в РФ)
+        // грань описана последней, индексы 63+
+        glShadeModel(GL_SMOOTH);
+        glBegin(GL_TRIANGLES);
 
-    glColor4f(1.0, 0.0, 0.0, 0.5);
-    glVertex3d(0.0f - opened, 0.0f - opened, -2.0f - opened);
+        glColor4f(1.0, 0.0, 0.0, 0.5);
+        glVertex3d(oct_vertices[63], oct_vertices[64], oct_vertices[65]);
 
-    glColor4f(0.0, 1.0, 0.0, 0.5);
-    glVertex3d(0.0f - opened, -2.0f - opened, 0.0f - opened);
+        glColor4f(0.0, 1.0, 0.0, 0.5);
+        glVertex3d(oct_vertices[66], oct_vertices[67], oct_vertices[68]);
 
-    glColor4f(0.0, 0.0, 1.0, 0.5);
-    glVertex3d(-2.0f - opened, 0.0f - opened, 0.0f - opened);
+        glColor4f(0.0, 0.0, 1.0, 0.5);
+        glVertex3d(oct_vertices[69], oct_vertices[70], oct_vertices[71]);
 
-    glEnd();
+        glEnd();
 
-    glColor4f(0.32, 0.16, 0.36, 0.5);
-    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_right_side);
-    glColor4f(0.82, 0.21, 0.0, 0.5);
-    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_front);
-    glColor4f(1.0, 1.0, 1.0, 0.5);
-    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, back_face);
-    glColor4f(0.0, 1.0, 0.0, 0.5);
-    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, front_face);
-    glColor4f(1.0, 0.0, 1.0, 0.5);
-    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, right_side);
-    glColor4f(1.0, 0.0, 0.0, 0.5);
-    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, left_side);
+        glColor4f(0.32, 0.16, 0.36, 0.5);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_right_side);
+        glColor4f(0.82, 0.21, 0.0, 0.5);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_front);
+        glColor4f(1.0, 1.0, 1.0, 0.5);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, back_face);
+        glColor4f(0.0, 1.0, 0.0, 0.5);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, front_face);
+        glColor4f(1.0, 0.0, 1.0, 0.5);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, right_side);
+        glColor4f(1.0, 0.0, 0.0, 0.5);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, left_side);
+    }
+
+    if (texture_mode == 2) {
+        // все грани имеют разные текстуры
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, textures[0]);
+        glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_BYTE,lower_back_face);
+        glBindTexture(GL_TEXTURE_2D, textures[1]);
+        glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_BYTE,bottom_left_side);
+        glBindTexture(GL_TEXTURE_2D, textures[2]);
+        glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_BYTE,bottom_right_side);
+        glBindTexture(GL_TEXTURE_2D, textures[3]);
+        glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_BYTE,lower_front);
+        glBindTexture(GL_TEXTURE_2D, textures[4]);
+        glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_BYTE,back_face);
+        glBindTexture(GL_TEXTURE_2D, textures[5]);
+        glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_BYTE,front_face);
+        glBindTexture(GL_TEXTURE_2D, textures[6]);
+        glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_BYTE,right_side);
+        glBindTexture(GL_TEXTURE_2D, textures[7]);
+        glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_BYTE,left_side);
+        glDisable(GL_TEXTURE_2D);
+    }
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
 void change_size(GLsizei w, GLsizei h) {
