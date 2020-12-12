@@ -20,11 +20,28 @@ GLfloat dx_rotation = 0.5;
 GLfloat oy_rotation = 0;
 GLfloat dy_rotation = 0;
 
+bool visibility = true;
+
 enum class COLOR_MODE : int {
     COLOR = 0,
     DIFFERENT_TEXTURES = 1,
     ONE_TEXTURE = 2
 };
+
+namespace KEY {
+    const char TEXTURE = 't';
+    const char VISIBLE = 'x';
+    const char OPEN_OCT = 'o';
+//	const char SUN_MODE = 'r';
+//	const char EXIT = 'z';
+//	const char LIGHT_MODE = 'f';
+    const char STOP = 'q';
+    const char TURN_UP = 'w';
+    const char TURN_DOWN = 's';
+    const char TURN_LEFT = 'a';
+    const char TURN_RIGHT = 'd';
+}
+
 
 COLOR_MODE texture_mode = COLOR_MODE::COLOR;
 
@@ -38,6 +55,15 @@ void draw_colored_oct();
 
 void Draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (!visibility) {
+        glEnable(GL_BLEND);
+        glDepthMask(GL_FALSE);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    } else {
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+    }
 
     //  Octahedron
     draw_colored_oct();
@@ -61,29 +87,30 @@ void Draw() {
 
 void glutNormalKeys(unsigned char key, int x, int y) {
     switch (key) {
-        case 'w':
+        case KEY::TURN_UP:
             dy_rotation = -0.5;
             break;
-        case 'a':
+        case KEY::TURN_LEFT:
             dx_rotation = -0.5;
             break;
-        case 's':
+        case KEY::TURN_DOWN:
             dy_rotation = 0.5;
             break;
-        case 'd':
+        case KEY::TURN_RIGHT:
             dx_rotation = 0.5;
             break;
-        case 'q':
-                dx_rotation = 0;
-                dy_rotation = 0;
+        case KEY::STOP:
+            dx_rotation = 0;
+            dy_rotation = 0;
             break;
-        case 'o':
+        case KEY::OPEN_OCT:
             if (!opened)
                 opened = 0.2;
             else
                 opened = 0;
+
             break;
-        case 't':
+        case KEY::TEXTURE:
             if (texture_mode == COLOR_MODE::ONE_TEXTURE) {
                 //glDisable(GL_TEXTURE_2D);
                 texture_mode = COLOR_MODE::COLOR;
@@ -95,7 +122,9 @@ void glutNormalKeys(unsigned char key, int x, int y) {
             }
 
             break;
-
+        case KEY::VISIBLE:
+            visibility = !visibility;
+            break;
         default:
             break;
     }
