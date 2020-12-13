@@ -8,19 +8,25 @@
 #define textures_count 8
 
 GLuint textures[textures_count];
+GLuint cutOctahedron;
 
+// sphere rotation params
 GLfloat sun_rotation = 1;
 GLfloat dx_sun_rotation = 1;
 GLfloat light_pos[] = {0, 0, 1, 1};
 
 GLfloat opened = 0; // раздвигание граней куба
+const GLfloat oct_side_len = 2.0f;
+const int partitions_number = 4;
 
-GLfloat ox_rotation = 0;
-GLfloat dx_rotation = 0.5;
-GLfloat oy_rotation = 0;
-GLfloat dy_rotation = 0;
+GLfloat ox_rotation = 0.0f;
+GLfloat dx_rotation = 0.5f;
+GLfloat oy_rotation = 0.0f;
+GLfloat dy_rotation = 0.0f;
 
 bool visibility = true;
+bool light = true;
+bool cut_oct = false;
 
 enum class COLOR_MODE : int {
     COLOR = 0,
@@ -32,9 +38,8 @@ namespace KEY {
     const char TEXTURE = 't';
     const char VISIBLE = 'x';
     const char OPEN_OCT = 'o';
-//	const char SUN_MODE = 'r';
-//	const char EXIT = 'z';
-//	const char LIGHT_MODE = 'f';
+    const char LIGHT_MODE = 'l';
+    const char CUT_OCT = 'c';
     const char STOP = 'q';
     const char TURN_UP = 'w';
     const char TURN_DOWN = 's';
@@ -42,93 +47,22 @@ namespace KEY {
     const char TURN_RIGHT = 'd';
 }
 
-
 COLOR_MODE texture_mode = COLOR_MODE::COLOR;
 
+void draw_colored_oct();
+
+void draw_cut_triangles();
+
+void Draw();
+
+void create_cut_triangles_list(float);
 
 void change_size(GLsizei, GLsizei);
 
 void timer(int);
 
-void draw_colored_oct();
+void glutNormalKeys(unsigned char, int, int);
 
-
-void Draw() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    if (!visibility) {
-        glEnable(GL_BLEND);
-        glDepthMask(GL_FALSE);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    } else {
-        glDepthMask(GL_TRUE);
-        glDisable(GL_BLEND);
-    }
-
-    //  Octahedron
-    draw_colored_oct();
-
-    // light and sphere
-    glLoadIdentity();
-    glTranslatef(0, 0, -12);  // сторона камеры
-    glRotatef((sun_rotation), 0, 1, 0);
-    glTranslatef(0, 0, -10);  // сторона октаэдра
-
-    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-
-    GLUquadricObj *quadObj;
-    quadObj = gluNewQuadric();
-    glColor3d(1, 1, 0);
-    gluQuadricDrawStyle(quadObj, GLU_LINE);
-    gluSphere(quadObj, 0.5, 10, 10);
-
-    glutSwapBuffers();
-}
-
-void glutNormalKeys(unsigned char key, int x, int y) {
-    switch (key) {
-        case KEY::TURN_UP:
-            dy_rotation = -0.5;
-            break;
-        case KEY::TURN_LEFT:
-            dx_rotation = -0.5;
-            break;
-        case KEY::TURN_DOWN:
-            dy_rotation = 0.5;
-            break;
-        case KEY::TURN_RIGHT:
-            dx_rotation = 0.5;
-            break;
-        case KEY::STOP:
-            dx_rotation = 0;
-            dy_rotation = 0;
-            break;
-        case KEY::OPEN_OCT:
-            if (!opened)
-                opened = 0.2;
-            else
-                opened = 0;
-
-            break;
-        case KEY::TEXTURE:
-            if (texture_mode == COLOR_MODE::ONE_TEXTURE) {
-                //glDisable(GL_TEXTURE_2D);
-                texture_mode = COLOR_MODE::COLOR;
-            } else if (texture_mode == COLOR_MODE::COLOR) {
-                //glEnable(GL_TEXTURE_2D);
-                texture_mode = COLOR_MODE::DIFFERENT_TEXTURES;
-            } else {
-                texture_mode = COLOR_MODE::ONE_TEXTURE;
-            }
-
-            break;
-        case KEY::VISIBLE:
-            visibility = !visibility;
-            break;
-        default:
-            break;
-    }
-}
 
 void textures_init() {
     int width[textures_count],
@@ -172,19 +106,26 @@ void light_init() {
 }
 
 int main(int argc, char **argv) {
-    std::cout << "w - turn up\n"
-                 "s - turn down\n"
-                 "a - turn left\n"
-                 "d - turn right\n"
-                 "q - stop rotation\n"
-                 "o - open octahedron\n"
-                 "t - enumerate texture mods";
+    using namespace KEY;
+    std::cout << TURN_UP << " - turn up\n"
+              << TURN_DOWN << " - turn down\n"
+              << TURN_LEFT << " - turn left\n"
+              << TURN_RIGHT << " - turn right\n"
+              << STOP << " - stop rotation\n"
+              << OPEN_OCT << " - open octahedron\n"
+              << TEXTURE << " - enumerate texture mods\n"
+              << VISIBLE << " - transparency control\n"
+              << LIGHT_MODE << " - light control\n"
+              << CUT_OCT << " - cut octahedron faces\n";
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 
     glutInitWindowSize(WIN_WIDTH, WIN_HEIGHT);
     glutCreateWindow("Octahedron");
+
+    cutOctahedron = glGenLists(1);
+    create_cut_triangles_list(oct_side_len / partitions_number);
 
     // Callback functions init
     glutDisplayFunc(Draw);
@@ -208,37 +149,37 @@ void draw_colored_oct() {
     glRotatef((oy_rotation), 1, 0, 0);
 
     GLfloat oct_vertices[] = {
-            -2.0f - opened, 0.0f + opened, 0.0f + opened, //0 передняя грань
-            0.0f - opened, 2.0f + opened, 0.0f + opened,  //1
-            0.0f - opened, 0.0f + opened, 2.0f + opened,  //2
+            -oct_side_len - opened, 0.0f + opened, 0.0f + opened, //0 передняя грань
+            0.0f - opened, oct_side_len + opened, 0.0f + opened,  //1
+            0.0f - opened, 0.0f + opened, oct_side_len + opened,  //2
 
-            0.0f + opened, 0.0f + opened, 2.0f + opened,  //2 правая боковая
-            0.0f + opened, 2.0f + opened, 0.0f + opened,  //1
-            2.0f + opened, 0.0f + opened, 0.0f + opened,  //3
+            0.0f + opened, 0.0f + opened, oct_side_len + opened,  //2 правая боковая
+            0.0f + opened, oct_side_len + opened, 0.0f + opened,  //1
+            oct_side_len + opened, 0.0f + opened, 0.0f + opened,  //3
 
-            2.0f + opened, 0.0f + opened, 0.0f - opened,  //3 задняя грань
-            0.0f + opened, 2.0f + opened, 0.0f - opened,  //1
-            0.0f + opened, 0.0f + opened, -2.0f - opened, //4
+            oct_side_len + opened, 0.0f + opened, 0.0f - opened,  //3 задняя грань
+            0.0f + opened, oct_side_len + opened, 0.0f - opened,  //1
+            0.0f + opened, 0.0f + opened, -oct_side_len - opened, //4
 
-            0.0f - opened, 0.0f + opened, -2.0f - opened, //4 левая боковая
-            0.0f - opened, 2.0f + opened, 0.0f - opened,  //1
-            -2.0f - opened, 0.0f + opened, 0.0f - opened, //0
+            0.0f - opened, 0.0f + opened, -oct_side_len - opened, //4 левая боковая
+            0.0f - opened, oct_side_len + opened, 0.0f - opened,  //1
+            -oct_side_len - opened, 0.0f + opened, 0.0f - opened, //0
 
-            -2.0f - opened, 0.0f - opened, 0.0f + opened, //0 нижняя передняя грань
-            0.0f - opened, -2.0f - opened, 0.0f + opened, //5
-            0.0f - opened, 0.0f - opened, 2.0f + opened,  //2
+            -oct_side_len - opened, 0.0f - opened, 0.0f + opened, //0 нижняя передняя грань
+            0.0f - opened, -oct_side_len - opened, 0.0f + opened, //5
+            0.0f - opened, 0.0f - opened, oct_side_len + opened,  //2
 
-            0.0f + opened, 0.0f - opened, 2.0f + opened,  //2 нижняя правая грань
-            0.0f + opened, -2.0f - opened, 0.0f + opened, //5
-            2.0f + opened, 0.0f - opened, 0.0f + opened,  //3
+            0.0f + opened, 0.0f - opened, oct_side_len + opened,  //2 нижняя правая грань
+            0.0f + opened, -oct_side_len - opened, 0.0f + opened, //5
+            oct_side_len + opened, 0.0f - opened, 0.0f + opened,  //3
 
-            2.0f + opened, 0.0f - opened, 0.0f - opened,  //3 нижняя задняя грань
-            0.0f + opened, -2.0f - opened, 0.0f - opened, //5
-            0.0f + opened, 0.0f - opened, -2.0f - opened, //4
+            oct_side_len + opened, 0.0f - opened, 0.0f - opened,  //3 нижняя задняя грань
+            0.0f + opened, -oct_side_len - opened, 0.0f - opened, //5
+            0.0f + opened, 0.0f - opened, -oct_side_len - opened, //4
 
-            0.0f - opened, 0.0f - opened, -2.0f - opened, // нижняя левая грань
-            0.0f - opened, -2.0f - opened, 0.0f - opened,
-            -2.0f - opened, 0.0f - opened, 0.0f - opened,
+            0.0f - opened, 0.0f - opened, -oct_side_len - opened, // нижняя левая грань
+            0.0f - opened, -oct_side_len - opened, 0.0f - opened,
+            -oct_side_len - opened, 0.0f - opened, 0.0f - opened,
     };
 
     GLfloat oct_normals[] = {
@@ -407,6 +348,122 @@ void draw_colored_oct() {
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
+void draw_cut_triangles(){
+    glLoadIdentity();
+
+    glTranslatef(0, 0, -5); // перемещаем объект по z для "вытягивания" октаэдра
+    glRotatef((ox_rotation), 0, 1, 0);
+    glRotatef((oy_rotation), 1, 0, 0);
+
+    glColor4f(0.0, 1.0, 0.0, 0.5);
+    glCallList(cutOctahedron);
+}
+
+void Draw() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (!visibility) {
+        glEnable(GL_BLEND);
+        glDepthMask(GL_FALSE);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    } else {
+        glDepthMask(GL_TRUE);
+        glDisable(GL_BLEND);
+    }
+
+    //  Octahedron
+    !cut_oct ? draw_colored_oct() : draw_cut_triangles();
+
+    // light and sphere
+    glLoadIdentity();
+    glTranslatef(0, 0, -12);  // сторона камеры
+    glRotatef((sun_rotation), 0, 1, 0);
+    glTranslatef(0, 0, -10);  // сторона октаэдра
+
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos); // полное освещение
+
+    GLUquadricObj *quadObj;
+    quadObj = gluNewQuadric();
+    glColor3d(1, 1, 0);
+    gluQuadricDrawStyle(quadObj, GLU_LINE);
+    gluSphere(quadObj, 0.5, 10, 10);
+
+    glutSwapBuffers();
+}
+
+/**
+ * @param p - length of the split part
+ * */
+void create_cut_triangles_list(float p) {
+    glLoadIdentity();
+    glNewList(cutOctahedron, GL_COMPILE);
+
+    for (GLfloat l = -(oct_side_len + p), i = -p; i >= -(oct_side_len + 4 * 0.1); l += p, i -= p) {
+        i -= 0.1;
+
+        glBegin(GL_POLYGON);
+        glVertex3d(0, i, l + 2 * p);
+        glVertex3d(0, i + p, l + p);
+        glVertex3d(l + p, i + p, 0);
+        glVertex3d(l + 2 * p, i, 0);
+        glEnd();
+
+        glBegin(GL_POLYGON);
+        glVertex3d(0, i, l + 2 * p);
+        glVertex3d(0, i + p, l + p);
+        glVertex3d(-(l + p), i + p, 0);
+        glVertex3d(-(l + 2 * p), i, 0);
+        glEnd();
+
+        glBegin(GL_POLYGON);
+        glVertex3d(0, i, -(l + 2 * p));
+        glVertex3d(0, i + p, -(l + p));
+        glVertex3d(l + p, i + p, 0);
+        glVertex3d(l + 2 * p, i, 0);
+        glEnd();
+
+        glBegin(GL_POLYGON);
+        glVertex3d(0, i, -(l + 2 * p));
+        glVertex3d(0, i + p, -(l + p));
+        glVertex3d(-(l + p), i + p, 0);
+        glVertex3d(-(l + 2 * p), i, 0);
+        glEnd();
+    }
+
+    for (GLfloat l = -(oct_side_len + p), i = p; i <= oct_side_len + 4 * 0.1; l += p, i += p) {
+        glBegin(GL_POLYGON);
+        glVertex3d(0, i, l + 2 * p);
+        glVertex3d(0, i - p, l + p);
+        glVertex3d(l + p, i - p, 0);
+        glVertex3d(l + 2 * p, i, 0);
+        glEnd();
+
+        glBegin(GL_POLYGON);
+        glVertex3d(0, i, l + 2 * p);
+        glVertex3d(0, i - p, l + p);
+        glVertex3d(-(l + p), i - p, 0);
+        glVertex3d(-(l + 2 * p), i, 0);
+        glEnd();
+
+        glBegin(GL_POLYGON);
+        glVertex3d(0, i, -(l + 2 * p));
+        glVertex3d(0, i - p, -(l + p));
+        glVertex3d(l + p, i - p, 0);
+        glVertex3d(l + 2 * p, i, 0);
+        glEnd();
+
+        glBegin(GL_POLYGON);
+        glVertex3d(0, i, -(l + 2 * p));
+        glVertex3d(0, i - p, -(l + p));
+        glVertex3d(-(l + p), i - p, 0);
+        glVertex3d(-(l + 2 * p), i, 0);
+        glEnd();
+
+        i += 0.1;
+    }
+    glEndList();
+}
+
 void change_size(GLsizei w, GLsizei h) {
     if (h == 0)
         h = 1;
@@ -429,4 +486,60 @@ void timer(int = 0) {
     oy_rotation += dy_rotation;
 
     sun_rotation += dx_sun_rotation;
+}
+
+void glutNormalKeys(unsigned char key, int x, int y) {
+    switch (key) {
+        case KEY::TURN_UP:
+            dy_rotation = -0.5;
+            break;
+        case KEY::TURN_LEFT:
+            dx_rotation = -0.5;
+            break;
+        case KEY::TURN_DOWN:
+            dy_rotation = 0.5;
+            break;
+        case KEY::TURN_RIGHT:
+            dx_rotation = 0.5;
+            break;
+        case KEY::STOP:
+            dx_rotation = 0;
+            dy_rotation = 0;
+            break;
+        case KEY::OPEN_OCT:
+            if (!opened)
+                opened = 0.2;
+            else
+                opened = 0;
+
+            break;
+        case KEY::TEXTURE:
+            if (texture_mode == COLOR_MODE::ONE_TEXTURE) {
+                //glDisable(GL_TEXTURE_2D);
+                texture_mode = COLOR_MODE::COLOR;
+            } else if (texture_mode == COLOR_MODE::COLOR) {
+                //glEnable(GL_TEXTURE_2D);
+                texture_mode = COLOR_MODE::DIFFERENT_TEXTURES;
+            } else {
+                texture_mode = COLOR_MODE::ONE_TEXTURE;
+            }
+
+            break;
+        case KEY::VISIBLE:
+            visibility = !visibility;
+            break;
+        case KEY::LIGHT_MODE:
+            if (light)
+                glDisable(GL_LIGHT0);
+            else
+                glEnable(GL_LIGHT0);
+
+            light = !light;
+            break;
+        case KEY::CUT_OCT:
+            cut_oct = !cut_oct;
+            break;
+        default:
+            break;
+    }
 }
