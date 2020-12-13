@@ -5,9 +5,9 @@
 
 #define WIN_HEIGHT 750
 #define WIN_WIDTH 750
-#define textures_count 8
+#define TEXTURES_COUNT 8
 
-GLuint textures[textures_count];
+GLuint textures[TEXTURES_COUNT];
 GLuint cutOctahedron;
 
 // sphere rotation params
@@ -65,14 +65,14 @@ void glutNormalKeys(unsigned char, int, int);
 
 
 void textures_init() {
-    int width[textures_count],
-            height[textures_count];
+    int width[TEXTURES_COUNT],
+            height[TEXTURES_COUNT];
 
-    glGenTextures(textures_count, textures);
-    unsigned char *images[textures_count];
+    glGenTextures(TEXTURES_COUNT, textures);
+    unsigned char *images[TEXTURES_COUNT];
 
     std::stringstream filename;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < TEXTURES_COUNT; i++) {
         filename << "../textures/txt" << i << ".bmp";
         images[i] = SOIL_load_image(filename.str().c_str(), &width[i], &height[i],
                                     nullptr, SOIL_LOAD_RGB);
@@ -124,6 +124,7 @@ int main(int argc, char **argv) {
     glutInitWindowSize(WIN_WIDTH, WIN_HEIGHT);
     glutCreateWindow("Octahedron");
 
+    // cut octahedron preparation
     cutOctahedron = glGenLists(1);
     create_cut_triangles_list(oct_side_len / partitions_number);
 
@@ -262,7 +263,7 @@ void draw_colored_oct() {
 
     switch (texture_mode) {
         case COLOR_MODE::COLOR:
-            // отрисовка цвета граней
+            // Все грани разных цветов, одна - радужная
             glEnable(GL_COLOR_MATERIAL);
             glColor4f(0.00, 0.32, 0.48, 0.5);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
@@ -319,7 +320,7 @@ void draw_colored_oct() {
             glDisable(GL_TEXTURE_2D);
             break;
         case COLOR_MODE::ONE_TEXTURE:
-            // перебор текстур
+            // на одной грани мелькают все текстуры
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, textures[rand() % 7]);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_left_side);
@@ -348,7 +349,7 @@ void draw_colored_oct() {
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
-void draw_cut_triangles(){
+void draw_cut_triangles() {
     glLoadIdentity();
 
     glTranslatef(0, 0, -5); // перемещаем объект по z для "вытягивания" октаэдра
@@ -515,10 +516,8 @@ void glutNormalKeys(unsigned char key, int x, int y) {
             break;
         case KEY::TEXTURE:
             if (texture_mode == COLOR_MODE::ONE_TEXTURE) {
-                //glDisable(GL_TEXTURE_2D);
                 texture_mode = COLOR_MODE::COLOR;
             } else if (texture_mode == COLOR_MODE::COLOR) {
-                //glEnable(GL_TEXTURE_2D);
                 texture_mode = COLOR_MODE::DIFFERENT_TEXTURES;
             } else {
                 texture_mode = COLOR_MODE::ONE_TEXTURE;
