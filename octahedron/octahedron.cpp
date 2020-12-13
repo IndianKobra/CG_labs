@@ -5,7 +5,7 @@
 
 #define WIN_HEIGHT 750
 #define WIN_WIDTH 750
-#define TEXTURES_COUNT 8
+#define TEXTURES_COUNT 9
 
 GLuint textures[TEXTURES_COUNT];
 GLuint cutOctahedron;
@@ -48,6 +48,41 @@ namespace KEY {
 }
 
 COLOR_MODE texture_mode = COLOR_MODE::COLOR;
+
+// This one maybe calculated automatic but I don't want to do this
+const GLfloat oct_normals[] = {
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f,
+
+        1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f,
+
+        -1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f,
+
+        1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f,
+
+        1.0f, 1.0f, -1.0f,
+        1.0f, 1.0f, -1.0f,
+        1.0f, 1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+};
 
 void draw_colored_oct();
 
@@ -183,40 +218,6 @@ void draw_colored_oct() {
             -oct_side_len - opened, 0.0f - opened, 0.0f - opened,
     };
 
-    GLfloat oct_normals[] = {
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f,
-
-            -1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f, -1.0f,
-
-            -1.0f, -1.0f, 1.0f,
-            -1.0f, -1.0f, 1.0f,
-            -1.0f, -1.0f, 1.0f,
-
-            1.0f, -1.0f, 1.0f,
-            1.0f, -1.0f, 1.0f,
-            1.0f, -1.0f, 1.0f,
-
-            -1.0f, -1.0f, 1.0f,
-            -1.0f, -1.0f, 1.0f,
-            -1.0f, -1.0f, 1.0f,
-
-            1.0f, -1.0f, 1.0f,
-            1.0f, -1.0f, 1.0f,
-            1.0f, -1.0f, 1.0f,
-
-            1.0f, 1.0f, -1.0f,
-            1.0f, 1.0f, -1.0f,
-            1.0f, 1.0f, -1.0f,
-
-            -1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f, -1.0f,
-            -1.0f, -1.0f, -1.0f,
-    };
-
 
     GLfloat texCoords[] = {0.0, 0.0,  // Нижний левый угол
                            1.0, 0.0,  // Нижний правый угол
@@ -322,25 +323,16 @@ void draw_colored_oct() {
         case COLOR_MODE::ONE_TEXTURE:
             // на одной грани мелькают все текстуры
             glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, textures[rand() % 7]);
+            glBindTexture(GL_TEXTURE_2D, textures[8]);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_left_side);
-            glDisable(GL_TEXTURE_2D);
-
-            glEnable(GL_COLOR_MATERIAL);
-            glColor4f(0.00, 0.32, 0.48, 0.5);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
-            glColor4f(0.32, 0.16, 0.36, 0.5);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_right_side);
-            glColor4f(0.82, 0.21, 0.0, 0.5);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_front);
-            glColor4f(1.0, 1.0, 1.0, 0.5);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, back_face);
-            glColor4f(0.0, 1.0, 0.0, 0.5);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, front_face);
-            glColor4f(1.0, 0.0, 1.0, 0.5);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, right_side);
-            glColor4f(1.0, 0.0, 0.0, 0.5);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, left_side);
+            glDisable(GL_TEXTURE_2D);
             break;
     }
 
@@ -356,7 +348,6 @@ void draw_cut_triangles() {
     glRotatef((ox_rotation), 0, 1, 0);
     glRotatef((oy_rotation), 1, 0, 0);
 
-    glColor4f(0.0, 1.0, 0.0, 0.5);
     glCallList(cutOctahedron);
 }
 
@@ -402,6 +393,7 @@ void create_cut_triangles_list(float p) {
     for (GLfloat l = -(oct_side_len + p), i = -p; i >= -(oct_side_len + 4 * 0.1); l += p, i -= p) {
         i -= 0.1;
 
+        glColor4f(0.00, 0.32, 0.48, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(0, i, l + 2 * p);
         glVertex3d(0, i + p, l + p);
@@ -409,6 +401,7 @@ void create_cut_triangles_list(float p) {
         glVertex3d(l + 2 * p, i, 0);
         glEnd();
 
+        glColor4f(0.0, 1.0, 0.0, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(0, i, l + 2 * p);
         glVertex3d(0, i + p, l + p);
@@ -416,6 +409,7 @@ void create_cut_triangles_list(float p) {
         glVertex3d(-(l + 2 * p), i, 0);
         glEnd();
 
+        glColor4f(0.32, 0.16, 0.36, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(0, i, -(l + 2 * p));
         glVertex3d(0, i + p, -(l + p));
@@ -423,6 +417,7 @@ void create_cut_triangles_list(float p) {
         glVertex3d(l + 2 * p, i, 0);
         glEnd();
 
+        glColor4f(1.0, 0.0, 1.0, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(0, i, -(l + 2 * p));
         glVertex3d(0, i + p, -(l + p));
@@ -432,6 +427,7 @@ void create_cut_triangles_list(float p) {
     }
 
     for (GLfloat l = -(oct_side_len + p), i = p; i <= oct_side_len + 4 * 0.1; l += p, i += p) {
+        glColor4f(0.00, 0.32, 0.48, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(0, i, l + 2 * p);
         glVertex3d(0, i - p, l + p);
@@ -439,6 +435,7 @@ void create_cut_triangles_list(float p) {
         glVertex3d(l + 2 * p, i, 0);
         glEnd();
 
+        glColor4f(0.0, 1.0, 0.0, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(0, i, l + 2 * p);
         glVertex3d(0, i - p, l + p);
@@ -446,6 +443,7 @@ void create_cut_triangles_list(float p) {
         glVertex3d(-(l + 2 * p), i, 0);
         glEnd();
 
+        glColor4f(0.32, 0.16, 0.36, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(0, i, -(l + 2 * p));
         glVertex3d(0, i - p, -(l + p));
@@ -453,6 +451,7 @@ void create_cut_triangles_list(float p) {
         glVertex3d(l + 2 * p, i, 0);
         glEnd();
 
+        glColor4f(1.0, 0.0, 1.0, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(0, i, -(l + 2 * p));
         glVertex3d(0, i - p, -(l + p));
@@ -462,6 +461,10 @@ void create_cut_triangles_list(float p) {
 
         i += 0.1;
     }
+
+    // octahedron normals
+    glNormalPointer(GL_FLOAT, 0, oct_normals);
+
     glEndList();
 }
 
