@@ -130,6 +130,7 @@ void textures_init() {
 }
 
 void light_init() {
+    glClearColor(0,0,0,0);
     glEnable(GL_DEPTH_TEST);
 
     glEnable(GL_LIGHTING);
@@ -138,6 +139,7 @@ void light_init() {
 
     glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+    glEnable(GL_NORMALIZE);
 }
 
 int main(int argc, char **argv) {
@@ -171,6 +173,7 @@ int main(int argc, char **argv) {
 
     light_init();
     textures_init();
+
 
     glutMainLoop();
 
@@ -321,7 +324,7 @@ void draw_colored_oct() {
             glDisable(GL_TEXTURE_2D);
             break;
         case COLOR_MODE::ONE_TEXTURE:
-            // на одной грани мелькают все текстуры
+            // One texture for all octahedron faces
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, textures[8]);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_left_side);
@@ -357,7 +360,7 @@ void Draw() {
     if (!visibility) {
         glEnable(GL_BLEND);
         glDepthMask(GL_FALSE);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBlendFunc(GL_ONE, GL_ONE); //GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
     } else {
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
