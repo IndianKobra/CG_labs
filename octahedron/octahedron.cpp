@@ -355,12 +355,13 @@ void draw_cut_triangles() {
 }
 
 void Draw() {
+    glDepthMask(GL_TRUE); // opengl 4.6 reshape bug fix
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (!visibility) {
         glEnable(GL_BLEND);
         glDepthMask(GL_FALSE);
-        glBlendFunc(GL_ONE, GL_ONE); //GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
+        glBlendFunc(GL_ONE, GL_ONE); //GL_SRC_ALPHA, GL_ONE
     } else {
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
