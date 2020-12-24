@@ -131,6 +131,7 @@ void textures_init() {
 
 void light_init() {
     glClearColor(0,0,0,0);
+
     glEnable(GL_DEPTH_TEST);
 
     glEnable(GL_LIGHTING);
@@ -388,91 +389,97 @@ void Draw() {
 }
 
 /**
- * @param p - length of the split part
+ * @param part_length - length of the split part
  * */
-void create_cut_triangles_list(float p) {
+void create_cut_triangles_list(float part_length) {
     glLoadIdentity();
     glNewList(cutOctahedron, GL_COMPILE);
 
+    /*
+     * In the next two cycles l and i are just temporary params for vertex's calculating
+     * */
+
     // The bottom cut octahedron's  part
-    for (GLfloat l = -(oct_side_len + p), i = -p; i >= -(oct_side_len + 4 * 0.1); l += p, i -= p) {
+    for (GLfloat l = -(oct_side_len + part_length),
+            i = -part_length; i >= -(oct_side_len + 4 * 0.1); l += part_length, i -= part_length) {
         i -= 0.1;
 
         // Lower back face
         glBegin(GL_POLYGON);
         glColor4f(1.0, 0.0, 0.0, 0.5);
-        glVertex3d(0, i, l + 2 * p);
+        glVertex3d(0, i, l + 2 * part_length);
         glColor4f(0.0, 1.0, 0.0, 0.5);
-        glVertex3d(0, i + p, l + p);
+        glVertex3d(0, i + part_length, l + part_length);
         glColor4f(0.0, 0.0, 1.0, 0.5);
-        glVertex3d(l + p, i + p, 0);
+        glVertex3d(l + part_length, i + part_length, 0);
         glColor4f(1.0, 1.0, 0.0, 0.5);
-        glVertex3d(l + 2 * p, i, 0);
+        glVertex3d(l + 2 * part_length, i, 0);
         glEnd();
 
         // Bottom right side
         glColor4f(0.00, 0.32, 0.48, 0.5);
         glBegin(GL_POLYGON);
-        glVertex3d(0, i, l + 2 * p);
-        glVertex3d(0, i + p, l + p);
-        glVertex3d(-(l + p), i + p, 0);
-        glVertex3d(-(l + 2 * p), i, 0);
+        glVertex3d(0, i, l + 2 * part_length);
+        glVertex3d(0, i + part_length, l + part_length);
+        glVertex3d(-(l + part_length), i + part_length, 0);
+        glVertex3d(-(l + 2 * part_length), i, 0);
         glEnd();
 
         // Lower front
         glColor4f(0.82, 0.21, 0.0, 0.5);
         glBegin(GL_POLYGON);
-        glVertex3d(0, i, -(l + 2 * p));
-        glVertex3d(0, i + p, -(l + p));
-        glVertex3d(l + p, i + p, 0);
-        glVertex3d(l + 2 * p, i, 0);
+        glVertex3d(0, i, -(l + 2 * part_length));
+        glVertex3d(0, i + part_length, -(l + part_length));
+        glVertex3d(l + part_length, i + part_length, 0);
+        glVertex3d(l + 2 * part_length, i, 0);
         glEnd();
 
         // Bottom right side
         glColor4f(0.32, 0.16, 0.36, 0.5);
         glBegin(GL_POLYGON);
-        glVertex3d(0, i, -(l + 2 * p));
-        glVertex3d(0, i + p, -(l + p));
-        glVertex3d(-(l + p), i + p, 0);
-        glVertex3d(-(l + 2 * p), i, 0);
+        glVertex3d(0, i, -(l + 2 * part_length));
+        glVertex3d(0, i + part_length, -(l + part_length));
+        glVertex3d(-(l + part_length), i + part_length, 0);
+        glVertex3d(-(l + 2 * part_length), i, 0);
         glEnd();
     }
 
     // The upper cut octahedron's part
-    for (GLfloat l = -(oct_side_len + p), i = p; i <= oct_side_len + 4 * 0.1; l += p, i += p) {
+    for (GLfloat l = -(oct_side_len + part_length), i = part_length;
+        i <= oct_side_len + 4 * 0.1; l += part_length, i += part_length) {
 
         // Left side
         glColor4f(1.0, 0.0, 0.0, 0.5);
         glBegin(GL_POLYGON);
-        glVertex3d(0, i, l + 2 * p);
-        glVertex3d(0, i - p, l + p);
-        glVertex3d(l + p, i - p, 0);
-        glVertex3d(l + 2 * p, i, 0);
+        glVertex3d(0, i, l + 2 * part_length);
+        glVertex3d(0, i - part_length, l + part_length);
+        glVertex3d(l + part_length, i - part_length, 0);
+        glVertex3d(l + 2 * part_length, i, 0);
         glEnd();
 
         // Lower front
         glColor4f(1.0, 1.0, 1.0, 0.5);
         glBegin(GL_POLYGON);
-        glVertex3d(0, i, l + 2 * p);
-        glVertex3d(0, i - p, l + p);
-        glVertex3d(-(l + p), i - p, 0);
-        glVertex3d(-(l + 2 * p), i, 0);
+        glVertex3d(0, i, l + 2 * part_length);
+        glVertex3d(0, i - part_length, l + part_length);
+        glVertex3d(-(l + part_length), i - part_length, 0);
+        glVertex3d(-(l + 2 * part_length), i, 0);
         glEnd();
 
         glColor4f(0.0, 1.0, 0.0, 0.5);
         glBegin(GL_POLYGON);
-        glVertex3d(0, i, -(l + 2 * p));
-        glVertex3d(0, i - p, -(l + p));
-        glVertex3d(l + p, i - p, 0);
-        glVertex3d(l + 2 * p, i, 0);
+        glVertex3d(0, i, -(l + 2 * part_length));
+        glVertex3d(0, i - part_length, -(l + part_length));
+        glVertex3d(l + part_length, i - part_length, 0);
+        glVertex3d(l + 2 * part_length, i, 0);
         glEnd();
 
         glColor4f(1.0, 0.0, 1.0, 0.5);
         glBegin(GL_POLYGON);
-        glVertex3d(0, i, -(l + 2 * p));
-        glVertex3d(0, i - p, -(l + p));
-        glVertex3d(-(l + p), i - p, 0);
-        glVertex3d(-(l + 2 * p), i, 0);
+        glVertex3d(0, i, -(l + 2 * part_length));
+        glVertex3d(0, i - part_length, -(l + part_length));
+        glVertex3d(-(l + part_length), i - part_length, 0);
+        glVertex3d(-(l + 2 * part_length), i, 0);
         glEnd();
 
         i += 0.1;
