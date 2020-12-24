@@ -394,18 +394,24 @@ void create_cut_triangles_list(float p) {
     glLoadIdentity();
     glNewList(cutOctahedron, GL_COMPILE);
 
+    // The bottom cut octahedron's  part
     for (GLfloat l = -(oct_side_len + p), i = -p; i >= -(oct_side_len + 4 * 0.1); l += p, i -= p) {
         i -= 0.1;
 
-        glColor4f(0.00, 0.32, 0.48, 0.5);
+        // Lower back face
         glBegin(GL_POLYGON);
+        glColor4f(1.0, 0.0, 0.0, 0.5);
         glVertex3d(0, i, l + 2 * p);
+        glColor4f(0.0, 1.0, 0.0, 0.5);
         glVertex3d(0, i + p, l + p);
+        glColor4f(0.0, 0.0, 1.0, 0.5);
         glVertex3d(l + p, i + p, 0);
+        glColor4f(1.0, 1.0, 0.0, 0.5);
         glVertex3d(l + 2 * p, i, 0);
         glEnd();
 
-        glColor4f(0.0, 1.0, 0.0, 0.5);
+        // Bottom right side
+        glColor4f(0.00, 0.32, 0.48, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(0, i, l + 2 * p);
         glVertex3d(0, i + p, l + p);
@@ -413,7 +419,8 @@ void create_cut_triangles_list(float p) {
         glVertex3d(-(l + 2 * p), i, 0);
         glEnd();
 
-        glColor4f(0.32, 0.16, 0.36, 0.5);
+        // Lower front
+        glColor4f(0.82, 0.21, 0.0, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(0, i, -(l + 2 * p));
         glVertex3d(0, i + p, -(l + p));
@@ -421,7 +428,8 @@ void create_cut_triangles_list(float p) {
         glVertex3d(l + 2 * p, i, 0);
         glEnd();
 
-        glColor4f(1.0, 0.0, 1.0, 0.5);
+        // Bottom right side
+        glColor4f(0.32, 0.16, 0.36, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(0, i, -(l + 2 * p));
         glVertex3d(0, i + p, -(l + p));
@@ -430,8 +438,11 @@ void create_cut_triangles_list(float p) {
         glEnd();
     }
 
+    // The upper cut octahedron's part
     for (GLfloat l = -(oct_side_len + p), i = p; i <= oct_side_len + 4 * 0.1; l += p, i += p) {
-        glColor4f(0.00, 0.32, 0.48, 0.5);
+
+        // Left side
+        glColor4f(1.0, 0.0, 0.0, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(0, i, l + 2 * p);
         glVertex3d(0, i - p, l + p);
@@ -439,7 +450,8 @@ void create_cut_triangles_list(float p) {
         glVertex3d(l + 2 * p, i, 0);
         glEnd();
 
-        glColor4f(0.0, 1.0, 0.0, 0.5);
+        // Lower front
+        glColor4f(1.0, 1.0, 1.0, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(0, i, l + 2 * p);
         glVertex3d(0, i - p, l + p);
@@ -447,7 +459,7 @@ void create_cut_triangles_list(float p) {
         glVertex3d(-(l + 2 * p), i, 0);
         glEnd();
 
-        glColor4f(0.32, 0.16, 0.36, 0.5);
+        glColor4f(0.0, 1.0, 0.0, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(0, i, -(l + 2 * p));
         glVertex3d(0, i - p, -(l + p));
