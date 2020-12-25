@@ -6,19 +6,19 @@
 #define WIN_HEIGHT 750
 #define WIN_WIDTH 750
 #define TEXTURES_COUNT 9
+#define PARTITIONS_NUMBER 4
 
 GLuint textures[TEXTURES_COUNT];
 GLuint cutOctahedron;
 GLuint cutOctahedronOpened;
 
-// sphere rotation params
+// Sphere rotation params
 GLfloat sun_rotation = 1;
 GLfloat dx_sun_rotation = 1;
 GLfloat light_pos[] = {0, 0, 1, 1};
 
-GLfloat opened = 0; // раздвигание граней куба
+GLfloat opened = 0; // splitting octahedron faces
 const GLfloat oct_side_len = 2.0f;
-const int partitions_number = 4;
 
 GLfloat ox_rotation = 0.0f;
 GLfloat dx_rotation = 0.5f;
@@ -117,7 +117,7 @@ void textures_init() {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width[i], height[i], 0,
                      GL_RGB, GL_UNSIGNED_BYTE, images[i]);
 
-        // texture rendering
+        // Texture rendering
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
@@ -126,7 +126,7 @@ void textures_init() {
 
     for (auto &image : images) {
         SOIL_free_image_data(image);
-        glBindTexture(GL_TEXTURE_2D, 0); // отвязка объекта
+        glBindTexture(GL_TEXTURE_2D, 0); // Object unlinking
     }
 }
 
@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
     glutCreateWindow("Octahedron");
 
     // Cut octahedron preparation
-    GLfloat opened_part_length = oct_side_len / partitions_number;
+    GLfloat opened_part_length = oct_side_len / PARTITIONS_NUMBER;
     cutOctahedron = glGenLists(2);
     create_cut_triangles_list(cutOctahedron, opened_part_length);
     glEndList();
@@ -197,43 +197,43 @@ void draw_colored_oct() {
     glRotatef((oy_rotation), 1, 0, 0);
 
     GLfloat oct_vertices[] = {
-            -oct_side_len - opened, 0.0f + opened, 0.0f + opened, //0 передняя грань
+            -oct_side_len - opened, 0.0f + opened, 0.0f + opened, //0 front face
             0.0f - opened, oct_side_len + opened, 0.0f + opened,  //1
             0.0f - opened, 0.0f + opened, oct_side_len + opened,  //2
 
-            0.0f + opened, 0.0f + opened, oct_side_len + opened,  //2 правая боковая
+            0.0f + opened, 0.0f + opened, oct_side_len + opened,  //2 right side face
             0.0f + opened, oct_side_len + opened, 0.0f + opened,  //1
             oct_side_len + opened, 0.0f + opened, 0.0f + opened,  //3
 
-            oct_side_len + opened, 0.0f + opened, 0.0f - opened,  //3 задняя грань
+            oct_side_len + opened, 0.0f + opened, 0.0f - opened,  //3 back face
             0.0f + opened, oct_side_len + opened, 0.0f - opened,  //1
             0.0f + opened, 0.0f + opened, -oct_side_len - opened, //4
 
-            0.0f - opened, 0.0f + opened, -oct_side_len - opened, //4 левая боковая
+            0.0f - opened, 0.0f + opened, -oct_side_len - opened, //4 left side face
             0.0f - opened, oct_side_len + opened, 0.0f - opened,  //1
             -oct_side_len - opened, 0.0f + opened, 0.0f - opened, //0
 
-            -oct_side_len - opened, 0.0f - opened, 0.0f + opened, //0 нижняя передняя грань
+            -oct_side_len - opened, 0.0f - opened, 0.0f + opened, //0 lower front face
             0.0f - opened, -oct_side_len - opened, 0.0f + opened, //5
             0.0f - opened, 0.0f - opened, oct_side_len + opened,  //2
 
-            0.0f + opened, 0.0f - opened, oct_side_len + opened,  //2 нижняя правая грань
+            0.0f + opened, 0.0f - opened, oct_side_len + opened,  //2 lower right side face
             0.0f + opened, -oct_side_len - opened, 0.0f + opened, //5
             oct_side_len + opened, 0.0f - opened, 0.0f + opened,  //3
 
-            oct_side_len + opened, 0.0f - opened, 0.0f - opened,  //3 нижняя задняя грань
+            oct_side_len + opened, 0.0f - opened, 0.0f - opened,  //3 lower back face
             0.0f + opened, -oct_side_len - opened, 0.0f - opened, //5
             0.0f + opened, 0.0f - opened, -oct_side_len - opened, //4
 
-            0.0f - opened, 0.0f - opened, -oct_side_len - opened, // нижняя левая грань
+            0.0f - opened, 0.0f - opened, -oct_side_len - opened, // lower left side face
             0.0f - opened, -oct_side_len - opened, 0.0f - opened,
             -oct_side_len - opened, 0.0f - opened, 0.0f - opened,
     };
 
 
-    GLfloat texCoords[] = {0.0, 0.0,  // Нижний левый угол
-                           1.0, 0.0,  // Нижний правый угол
-                           0.5, 1.0,  // верхняя центральная сторона
+    GLfloat texCoords[] = {0.0, 0.0,  // Lower left corner
+                           1.0, 0.0,  // Lower right corner
+                           0.5, 1.0,  // Upper center side
                            0.0, 0.0,
                            1.0, 0.0,
                            0.5, 1.0,
@@ -265,24 +265,24 @@ void draw_colored_oct() {
     glVertexPointer(3, GL_FLOAT, 0, oct_vertices);
     glNormalPointer(GL_FLOAT, 0, oct_normals);
 
-    GLubyte front_face[] = {0, 1, 2};             // передняя грань
-    GLubyte right_side[] = {3, 4, 5};             // правая грань
-    GLubyte back_face[] = {6, 7, 8};              // задняя грань
-    GLubyte left_side[] = {9, 10, 11};            // левая грань
-    GLubyte lower_front[] = {12, 13, 14};         // нижняя передняя грань
-    GLubyte bottom_right_side[] = {15, 16, 17};   // нижняя правая грань
-    GLubyte lower_back_face[] = {18, 19, 20};     // нижняя задняя грань
-    GLubyte bottom_left_side[] = {21, 22, 23};    // нижняя левая грань
+    const GLubyte front_face[] = {0, 1, 2};
+    const GLubyte right_side[] = {3, 4, 5};
+    const GLubyte back_face[] = {6, 7, 8};
+    const GLubyte left_side[] = {9, 10, 11};
+    const GLubyte lower_front[] = {12, 13, 14};
+    const GLubyte lower_right_side[] = {15, 16, 17};
+    const GLubyte lower_back_face[] = {18, 19, 20};
+    const GLubyte lower_left_side[] = {21, 22, 23};
 
     switch (texture_mode) {
         case COLOR_MODE::COLOR:
-            // Все грани разных цветов, одна - радужная
+            // Each face has it's own color
             glEnable(GL_COLOR_MATERIAL);
             glColor4f(0.00, 0.32, 0.48, 0.5);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
 
-            // нижняя левая  грань цвета ЛГБТ(запрещено в РФ)
-            // грань описана последней, индексы 63+
+            /*Lower left face has lgbt color.
+             * The face is described last, 63+ indexes*/
             glShadeModel(GL_SMOOTH);
             glBegin(GL_TRIANGLES);
 
@@ -298,7 +298,7 @@ void draw_colored_oct() {
             glEnd();
 
             glColor4f(0.32, 0.16, 0.36, 0.5);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_right_side);
+            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_right_side);
             glColor4f(0.82, 0.21, 0.0, 0.5);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_front);
             glColor4f(1.0, 1.0, 1.0, 0.5);
@@ -312,14 +312,14 @@ void draw_colored_oct() {
 
             break;
         case COLOR_MODE::DIFFERENT_TEXTURES:
-            // все грани имеют разные текстуры
+            // Each octahedron face hase it's own texture
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, textures[0]);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
             glBindTexture(GL_TEXTURE_2D, textures[1]);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_left_side);
+            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_left_side);
             glBindTexture(GL_TEXTURE_2D, textures[2]);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_right_side);
+            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_right_side);
             glBindTexture(GL_TEXTURE_2D, textures[3]);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_front);
             glBindTexture(GL_TEXTURE_2D, textures[4]);
@@ -336,9 +336,9 @@ void draw_colored_oct() {
             // One texture for all octahedron faces
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, textures[8]);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_left_side);
+            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_left_side);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, bottom_right_side);
+            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_right_side);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_front);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, back_face);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, front_face);
@@ -367,7 +367,7 @@ void draw_cut_triangles(GLuint display_list) {
 }
 
 void Draw() {
-    glDepthMask(GL_TRUE); // opengl 4.6 reshape bug fix
+    glDepthMask(GL_TRUE); // Opengl 4.6 reshape bug fix
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (!visibility) {
@@ -384,9 +384,8 @@ void Draw() {
         draw_colored_oct();
     else
         opened == 0 ? draw_cut_triangles(cutOctahedron) : draw_cut_triangles(cutOctahedronOpened);
-//    !cut_oct ? draw_colored_oct() : draw_cut_triangles();
 
-    // light and sphere
+    // Light and sphere
     glLoadIdentity();
     glTranslatef(0, 0, -12);  // сторона камеры
     glRotatef((sun_rotation), 0, 1, 0);
@@ -465,7 +464,7 @@ void create_cut_triangles_list(GLuint display_list, GLfloat part_length, GLfloat
     for (GLfloat l = -(oct_side_len + part_length), i = part_length;
          i <= oct_side_len + 4 * 0.1; l += part_length, i += part_length) {
 
-        // Left face
+        // Left side
         glColor4f(1.0, 0.0, 0.0, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(-detach_length, i + detach_length, l + 2 * part_length - detach_length);
@@ -492,7 +491,7 @@ void create_cut_triangles_list(GLuint display_list, GLfloat part_length, GLfloat
         glVertex3d(l + 2 * part_length - detach_length, i + detach_length, detach_length);
         glEnd();
 
-        // Right face
+        // Right side
         glColor4f(1.0, 0.0, 1.0, 0.5);
         glBegin(GL_POLYGON);
         glVertex3d(detach_length, i + detach_length, -(l + 2 * part_length) + detach_length);
