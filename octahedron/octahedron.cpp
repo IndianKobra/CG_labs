@@ -142,9 +142,6 @@ void light_init() {
 
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
     glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
-
-    glEnable(GL_COLOR_MATERIAL);
-//    glEnable(GL_NORMALIZE);
 }
 
 int main(int argc, char **argv) {
@@ -195,7 +192,7 @@ int main(int argc, char **argv) {
 void draw_colored_oct() {
     glLoadIdentity();
 
-    glTranslatef(0, 0, -5); // перемещаем объект по z для "вытягивания" октаэдра
+    glTranslatef(0, 0, -5); // Moving the object along z to "stretch" the octahedron
     glRotatef((ox_rotation), 0, 1, 0);
     glRotatef((oy_rotation), 1, 0, 0);
 
@@ -283,85 +280,99 @@ void draw_colored_oct() {
             // Each face has it's own color
             glEnable(GL_COLOR_MATERIAL);
 
+
             glColor4f(0.00, 0.32, 0.48, 0.5);
-//            glNormal3f(1.0f, -1.0f, -1.0f);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
 
+
             /* Lower left face has lgbt color.
-             * The face is described last, 63+ indexes */
+             * The face is described last, 63+ indexes.
+             * GL_NORMAL_ARRAY doesn't work with self-written vertexes*/
             glShadeModel(GL_SMOOTH);
-            glNormal3f(-1.0f, -1.0f, -1.0f);
             glBegin(GL_TRIANGLES);
-            glColor4f(1.0, 0.0, 0.0, 0.5);
-            glVertex3d(oct_vertices[63], oct_vertices[64], oct_vertices[65]);
-            glNormal3f(-1.0f, -1.0f, -1.0f);
-            glColor4f(0.0, 1.0, 0.0, 0.5);
-            glVertex3d(oct_vertices[66], oct_vertices[67], oct_vertices[68]);
-            glNormal3f(-1.0f, -1.0f, -1.0f);
-            glColor4f(0.0, 0.0, 1.0, 0.5);
-            glVertex3d(oct_vertices[69], oct_vertices[70], oct_vertices[71]);
+
+                glNormal3f(-1.0f, -1.0f, -1.0f);
+                glColor4f(1.0, 0.0, 0.0, 0.5);
+                glVertex3d(oct_vertices[63], oct_vertices[64], oct_vertices[65]);
+
+                glNormal3f(-1.0f, -1.0f, -1.0f);
+                glColor4f(0.0, 1.0, 0.0, 0.5);
+                glVertex3d(oct_vertices[66], oct_vertices[67], oct_vertices[68]);
+
+                glNormal3f(-1.0f, -1.0f, -1.0f);
+                glColor4f(0.0, 0.0, 1.0, 0.5);
+                glVertex3d(oct_vertices[69], oct_vertices[70], oct_vertices[71]);
 
             glEnd();
 
+
             glColor4f(0.32, 0.16, 0.36, 0.5);
-//            glNormal3f(1.0f, -1.0f, 1.0f);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_right_side);
 
             glColor4f(0.82, 0.21, 0.0, 0.5);
-//            glNormal3f(-1.0f, -1.0f, 1.0f);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_front);
 
             glColor4f(1.0, 1.0, 1.0, 0.5);
-//            glNormal3f(-1.0f, -1.0f, 1.0f);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, back_face);
 
             glColor4f(0.0, 1.0, 0.0, 0.5);
-//            glNormal3f(1.0f, -1.0f, -1.0f);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, front_face);
 
             glColor4f(1.0, 0.0, 1.0, 0.5);
-//            glNormal3f(-1.0f, -1.0f, -1.0f);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, right_side);
 
             glColor4f(1.0, 0.0, 0.0, 0.5);
-//            glNormal3f(1.0f, -1.0f, 1.0f);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, left_side);
 
             break;
         case COLOR_MODE::DIFFERENT_TEXTURES:
             // Each octahedron face hase it's own texture
             glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, textures[0]);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
-            glBindTexture(GL_TEXTURE_2D, textures[1]);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_left_side);
-            glBindTexture(GL_TEXTURE_2D, textures[2]);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_right_side);
-            glBindTexture(GL_TEXTURE_2D, textures[3]);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_front);
-            glBindTexture(GL_TEXTURE_2D, textures[4]);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, back_face);
-            glBindTexture(GL_TEXTURE_2D, textures[5]);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, front_face);
-            glBindTexture(GL_TEXTURE_2D, textures[6]);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, right_side);
-            glBindTexture(GL_TEXTURE_2D, textures[7]);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, left_side);
+
+                glBindTexture(GL_TEXTURE_2D, textures[0]);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
+
+                glBindTexture(GL_TEXTURE_2D, textures[1]);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_left_side);
+
+                glBindTexture(GL_TEXTURE_2D, textures[2]);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_right_side);
+
+                glBindTexture(GL_TEXTURE_2D, textures[3]);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_front);
+
+                glBindTexture(GL_TEXTURE_2D, textures[4]);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, back_face);
+
+                glBindTexture(GL_TEXTURE_2D, textures[5]);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, front_face);
+
+                glBindTexture(GL_TEXTURE_2D, textures[6]);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, right_side);
+
+                glBindTexture(GL_TEXTURE_2D, textures[7]);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, left_side);
+
             glDisable(GL_TEXTURE_2D);
+
             break;
         case COLOR_MODE::ONE_TEXTURE:
             // One texture for all octahedron faces
             glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, textures[8]);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_left_side);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_right_side);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_front);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, back_face);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, front_face);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, right_side);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, left_side);
+
+                glBindTexture(GL_TEXTURE_2D, textures[8]);
+
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_left_side);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_right_side);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_front);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, back_face);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, front_face);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, right_side);
+                glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, left_side);
+
             glDisable(GL_TEXTURE_2D);
+
             break;
     }
 
@@ -376,7 +387,7 @@ void draw_colored_oct() {
 void draw_cut_triangles(GLuint display_list) {
     glLoadIdentity();
 
-    glTranslatef(0, 0, -5); // перемещаем объект по z для "вытягивания" октаэдра
+    glTranslatef(0, 0, -5);
     glRotatef((ox_rotation), 0, 1, 0);
     glRotatef((oy_rotation), 1, 0, 0);
 
@@ -390,7 +401,7 @@ void Draw() {
     if (!visibility) {
         glEnable(GL_BLEND);
         glDepthMask(GL_FALSE);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE); //GL_SRC_ALPHA, GL_ONE
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     } else {
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
@@ -405,9 +416,9 @@ void Draw() {
 
     // Light and sphere
     glLoadIdentity();
-    glTranslatef(0, 0, -12);  // сторона камеры
+    glTranslatef(0, 0, -12);  // Camera side
     glRotatef((sun_rotation), 0, 1, 0);
-    glTranslatef(0, 0, -10);  // сторона октаэдра
+    glTranslatef(0, 0, -10);  // Octahedron side
 
     glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
 
@@ -416,7 +427,9 @@ void Draw() {
     glColor3d(1, 1, 0);
     gluQuadricDrawStyle(quadObj, GLU_LINE);
     gluSphere(quadObj, 0.5, 10, 10);
+
     gluDeleteQuadric(quadObj);
+
     glutSwapBuffers();
 }
 
@@ -436,50 +449,75 @@ void create_cut_triangles_list(GLuint display_list, GLfloat part_length, GLfloat
     // The bottom part of the cut octahedron
     for (GLfloat l = -(oct_side_len + part_length),
                  i = -part_length; i >= -(oct_side_len + 4 * 0.1); l += part_length, i -= part_length) {
+
         i -= 0.1;
 
         // Lower left face - lgbt color
         glBegin(GL_POLYGON);
-        glNormal3f(1.0f, -1.0f, 1.0f);
-        glColor4f(1.0, 0.0, 0.0, 0.5);
-        glVertex3d(-detach_length, i - detach_length, l + 2 * part_length - detach_length);
-        glColor4f(0.0, 1.0, 0.0, 0.5);
-        glVertex3d(-detach_length, i + part_length - detach_length, l + part_length - detach_length);
-        glColor4f(0.0, 0.0, 1.0, 0.5);
-        glVertex3d(l + part_length - detach_length, i + part_length - detach_length, -detach_length);
-        glColor4f(1.0, 1.0, 0.0, 0.5);
-        glVertex3d(l + 2 * part_length - detach_length, i - detach_length, -detach_length);
+            glNormal3f(1.0f, -1.0f, 1.0f);
+
+            glColor4f(1.0, 0.0, 0.0, 0.5);
+            glVertex3d(-detach_length, i - detach_length, l + 2 * part_length - detach_length);
+
+            glColor4f(0.0, 1.0, 0.0, 0.5);
+            glVertex3d(-detach_length, i + part_length - detach_length, l + part_length - detach_length);
+
+            glColor4f(0.0, 0.0, 1.0, 0.5);
+            glVertex3d(l + part_length - detach_length, i + part_length - detach_length, -detach_length);
+
+            glColor4f(1.0, 1.0, 0.0, 0.5);
+            glVertex3d(l + 2 * part_length - detach_length, i - detach_length, -detach_length);
+
         glEnd();
+
 
         // Lower back face
         glColor4f(0.00, 0.32, 0.48, 0.5);
         glBegin(GL_POLYGON);
-        glNormal3f(1.0f, 1.0f, -1.0f);
-        glVertex3d(detach_length, i - detach_length, l + 2 * part_length - detach_length);
-        glVertex3d(detach_length, i + part_length - detach_length, l + part_length - detach_length);
-        glVertex3d(-(l + part_length) + detach_length, i + part_length - detach_length, -detach_length);
-        glVertex3d(-(l + 2 * part_length) + detach_length, i - detach_length, -detach_length);
+            glNormal3f(1.0f, 1.0f, -1.0f);
+
+            glVertex3d(detach_length, i - detach_length, l + 2 * part_length - detach_length);
+
+            glVertex3d(detach_length, i + part_length - detach_length, l + part_length - detach_length);
+
+            glVertex3d(-(l + part_length) + detach_length, i + part_length - detach_length, -detach_length);
+
+            glVertex3d(-(l + 2 * part_length) + detach_length, i - detach_length, -detach_length);
+
         glEnd();
+
 
         // Lower front face
         glColor4f(0.82, 0.21, 0.0, 0.5);
         glBegin(GL_POLYGON);
-        glNormal3f(-1.0f, -1.0f, 1.0f);
-        glVertex3d(-detach_length, i - detach_length, -(l + 2 * part_length) + detach_length);
-        glVertex3d(-detach_length, i + part_length - detach_length, -(l + part_length) + detach_length);
-        glVertex3d(l + part_length - detach_length, i + part_length - detach_length, detach_length);
-        glVertex3d(l + 2 * part_length - detach_length, i - detach_length, detach_length);
+            glNormal3f(-1.0f, -1.0f, 1.0f);
+
+            glVertex3d(-detach_length, i - detach_length, -(l + 2 * part_length) + detach_length);
+
+            glVertex3d(-detach_length, i + part_length - detach_length, -(l + part_length) + detach_length);
+
+            glVertex3d(l + part_length - detach_length, i + part_length - detach_length, detach_length);
+
+            glVertex3d(l + 2 * part_length - detach_length, i - detach_length, detach_length);
+
         glEnd();
+
 
         // Lower right side
         glColor4f(0.32, 0.16, 0.36, 0.5);
         glBegin(GL_POLYGON);
-        glNormal3f(-1.0f, 1.0f, -1.0f);
-        glVertex3d(detach_length, i - detach_length, -(l + 2 * part_length) + detach_length);
-        glVertex3d(detach_length, i + part_length - detach_length, -(l + part_length) + detach_length);
-        glVertex3d(-(l + part_length) + detach_length, i + part_length - detach_length, detach_length);
-        glVertex3d(-(l + 2 * part_length) + detach_length, i - detach_length, detach_length);
+            glNormal3f(-1.0f, 1.0f, -1.0f);
+
+            glVertex3d(detach_length, i - detach_length, -(l + 2 * part_length) + detach_length);
+
+            glVertex3d(detach_length, i + part_length - detach_length, -(l + part_length) + detach_length);
+
+            glVertex3d(-(l + part_length) + detach_length, i + part_length - detach_length, detach_length);
+
+            glVertex3d(-(l + 2 * part_length) + detach_length, i - detach_length, detach_length);
+
         glEnd();
+
     }
 
     // The upper part of the cut octahedron
@@ -489,45 +527,69 @@ void create_cut_triangles_list(GLuint display_list, GLfloat part_length, GLfloat
         // Left side
         glColor4f(1.0, 0.0, 0.0, 0.5);
         glBegin(GL_POLYGON);
-        glNormal3f(-1.0f, -1.0f, -1.0f);
-        glVertex3d(-detach_length, i + detach_length, l + 2 * part_length - detach_length);
-        glVertex3d(-detach_length, i - part_length + detach_length, l + part_length - detach_length);
-        glVertex3d(l + part_length - detach_length, i - part_length + detach_length, -detach_length);
-        glVertex3d(l + 2 * part_length - detach_length, i + detach_length, -detach_length);
+            glNormal3f(-1.0f, -1.0f, -1.0f);
+
+            glVertex3d(-detach_length, i + detach_length, l + 2 * part_length - detach_length);
+
+            glVertex3d(-detach_length, i - part_length + detach_length, l + part_length - detach_length);
+
+            glVertex3d(l + part_length - detach_length, i - part_length + detach_length, -detach_length);
+
+            glVertex3d(l + 2 * part_length - detach_length, i + detach_length, -detach_length);
+
         glEnd();
+
 
         // Back face
         glColor4f(1.0, 1.0, 1.0, 0.5);
         glBegin(GL_POLYGON);
-        glNormal3f(-1.0f, 1.0f, 1.0f);
-        glVertex3d(detach_length, i + detach_length, l + 2 * part_length - detach_length);
-        glVertex3d(detach_length, i - part_length + detach_length, l + part_length - detach_length);
-        glVertex3d(-(l + part_length) + detach_length, i - part_length + detach_length, -detach_length);
-        glVertex3d(-(l + 2 * part_length) + detach_length, i + detach_length, -detach_length);
+            glNormal3f(-1.0f, 1.0f, 1.0f);
+
+            glVertex3d(detach_length, i + detach_length, l + 2 * part_length - detach_length);
+
+            glVertex3d(detach_length, i - part_length + detach_length, l + part_length - detach_length);
+
+            glVertex3d(-(l + part_length) + detach_length, i - part_length + detach_length, -detach_length);
+
+            glVertex3d(-(l + 2 * part_length) + detach_length, i + detach_length, -detach_length);
+
         glEnd();
+
 
         // Front face
         glColor4f(0.0, 1.0, 0.0, 0.5);
         glBegin(GL_POLYGON);
-        glNormal3f(1.0f, -1.0f, -1.0f);
-        glVertex3d(-detach_length, i + detach_length, -(l + 2 * part_length) + detach_length);
-        glVertex3d(-detach_length, i - part_length + detach_length, -(l + part_length) + detach_length);
-        glVertex3d(l + part_length - detach_length, i - part_length + detach_length, detach_length);
-        glVertex3d(l + 2 * part_length - detach_length, i + detach_length, detach_length);
+            glNormal3f(1.0f, -1.0f, -1.0f);
+
+            glVertex3d(-detach_length, i + detach_length, -(l + 2 * part_length) + detach_length);
+
+            glVertex3d(-detach_length, i - part_length + detach_length, -(l + part_length) + detach_length);
+
+            glVertex3d(l + part_length - detach_length, i - part_length + detach_length, detach_length);
+
+            glVertex3d(l + 2 * part_length - detach_length, i + detach_length, detach_length);
+
         glEnd();
+
 
         // Right side
         glColor4f(1.0, 0.0, 1.0, 0.5);
         glBegin(GL_POLYGON);
-        glNormal3f(1.0f, 1.0f, 1.0f);
-        glVertex3d(detach_length, i + detach_length, -(l + 2 * part_length) + detach_length);
-        glVertex3d(detach_length, i - part_length + detach_length, -(l + part_length) + detach_length);
-        glVertex3d(-(l + part_length) + detach_length, i - part_length + detach_length, detach_length);
-        glVertex3d(-(l + 2 * part_length) + detach_length, i + detach_length, detach_length);
+            glNormal3f(1.0f, 1.0f, 1.0f);
+
+            glVertex3d(detach_length, i + detach_length, -(l + 2 * part_length) + detach_length);
+
+            glVertex3d(detach_length, i - part_length + detach_length, -(l + part_length) + detach_length);
+
+            glVertex3d(-(l + part_length) + detach_length, i - part_length + detach_length, detach_length);
+
+            glVertex3d(-(l + 2 * part_length) + detach_length, i + detach_length, detach_length);
+
         glEnd();
 
         i += 0.1;
     }
+
 
     glEndList();
 }
