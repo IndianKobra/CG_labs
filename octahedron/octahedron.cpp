@@ -52,38 +52,37 @@ namespace KEY {
 
 COLOR_MODE texture_mode = COLOR_MODE::COLOR;
 
-// This one maybe calculated automatic but I don't want to do this
 const GLfloat oct_normals[] = {
         1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f, // Front face
         1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f, // Right side face
+        -1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f, // Back face
+        -1.0f, -1.0f, 1.0f,
+
+        1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f, // Left side face
+        1.0f, -1.0f, 1.0f,
+
+        -1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f, // Lower front face
+        -1.0f, -1.0f, 1.0f,
+
+        1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f, // Lower right side face
+        1.0f, -1.0f, 1.0f,
+
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f, // Lower back face
         1.0f, -1.0f, -1.0f,
 
         -1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
-
-        -1.0f, -1.0f, 1.0f,
-        -1.0f, -1.0f, 1.0f,
-        -1.0f, -1.0f, 1.0f,
-
-        1.0f, -1.0f, 1.0f,
-        1.0f, -1.0f, 1.0f,
-        1.0f, -1.0f, 1.0f,
-
-        -1.0f, -1.0f, 1.0f,
-        -1.0f, -1.0f, 1.0f,
-        -1.0f, -1.0f, 1.0f,
-
-        1.0f, -1.0f, 1.0f,
-        1.0f, -1.0f, 1.0f,
-        1.0f, -1.0f, 1.0f,
-
-        1.0f, 1.0f, -1.0f,
-        1.0f, 1.0f, -1.0f,
-        1.0f, 1.0f, -1.0f,
-
-        -1.0f, -1.0f, -1.0f,
-        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f, // Lower left side face
         -1.0f, -1.0f, -1.0f,
 };
 
@@ -145,7 +144,7 @@ void light_init() {
     glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
 
     glEnable(GL_COLOR_MATERIAL);
-    glEnable(GL_NORMALIZE);
+//    glEnable(GL_NORMALIZE);
 }
 
 int main(int argc, char **argv) {
@@ -200,6 +199,7 @@ void draw_colored_oct() {
     glRotatef((ox_rotation), 0, 1, 0);
     glRotatef((oy_rotation), 1, 0, 0);
 
+    // This one maybe calculated automatic but I don't want to do this
     GLfloat oct_vertices[] = {
             -oct_side_len - opened, 0.0f + opened, 0.0f + opened, //0 front face
             0.0f - opened, oct_side_len + opened, 0.0f + opened,  //1
@@ -282,38 +282,50 @@ void draw_colored_oct() {
         case COLOR_MODE::COLOR:
             // Each face has it's own color
             glEnable(GL_COLOR_MATERIAL);
+
             glColor4f(0.00, 0.32, 0.48, 0.5);
+//            glNormal3f(1.0f, -1.0f, -1.0f);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_back_face);
 
             /* Lower left face has lgbt color.
              * The face is described last, 63+ indexes */
             glShadeModel(GL_SMOOTH);
+            glNormal3f(-1.0f, -1.0f, -1.0f);
             glBegin(GL_TRIANGLES);
-
             glColor4f(1.0, 0.0, 0.0, 0.5);
             glVertex3d(oct_vertices[63], oct_vertices[64], oct_vertices[65]);
-
+            glNormal3f(-1.0f, -1.0f, -1.0f);
             glColor4f(0.0, 1.0, 0.0, 0.5);
             glVertex3d(oct_vertices[66], oct_vertices[67], oct_vertices[68]);
-
+            glNormal3f(-1.0f, -1.0f, -1.0f);
             glColor4f(0.0, 0.0, 1.0, 0.5);
             glVertex3d(oct_vertices[69], oct_vertices[70], oct_vertices[71]);
 
             glEnd();
 
             glColor4f(0.32, 0.16, 0.36, 0.5);
+//            glNormal3f(1.0f, -1.0f, 1.0f);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_right_side);
+
             glColor4f(0.82, 0.21, 0.0, 0.5);
+//            glNormal3f(-1.0f, -1.0f, 1.0f);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, lower_front);
+
             glColor4f(1.0, 1.0, 1.0, 0.5);
+//            glNormal3f(-1.0f, -1.0f, 1.0f);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, back_face);
+
             glColor4f(0.0, 1.0, 0.0, 0.5);
+//            glNormal3f(1.0f, -1.0f, -1.0f);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, front_face);
+
             glColor4f(1.0, 0.0, 1.0, 0.5);
+//            glNormal3f(-1.0f, -1.0f, -1.0f);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, right_side);
+
             glColor4f(1.0, 0.0, 0.0, 0.5);
+//            glNormal3f(1.0f, -1.0f, 1.0f);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_BYTE, left_side);
-//            glLoadIdentity();
 
             break;
         case COLOR_MODE::DIFFERENT_TEXTURES:
@@ -378,7 +390,7 @@ void Draw() {
     if (!visibility) {
         glEnable(GL_BLEND);
         glDepthMask(GL_FALSE);
-        glBlendFunc(GL_ONE, GL_ONE); //GL_SRC_ALPHA, GL_ONE
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE); //GL_SRC_ALPHA, GL_ONE
     } else {
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
@@ -386,7 +398,7 @@ void Draw() {
 
 
     //  Octahedron
-    if(!cut_oct)
+    if (!cut_oct)
         draw_colored_oct();
     else
         opened == 0 ? draw_cut_triangles(cutOctahedron) : draw_cut_triangles(cutOctahedronOpened);
@@ -477,7 +489,7 @@ void create_cut_triangles_list(GLuint display_list, GLfloat part_length, GLfloat
         // Left side
         glColor4f(1.0, 0.0, 0.0, 0.5);
         glBegin(GL_POLYGON);
-        glNormal3f( -1.0f, -1.0f, -1.0f);
+        glNormal3f(-1.0f, -1.0f, -1.0f);
         glVertex3d(-detach_length, i + detach_length, l + 2 * part_length - detach_length);
         glVertex3d(-detach_length, i - part_length + detach_length, l + part_length - detach_length);
         glVertex3d(l + part_length - detach_length, i - part_length + detach_length, -detach_length);
