@@ -13,23 +13,27 @@ GLuint cutOctahedron;
 GLuint cutOctahedronOpened;
 
 // Sphere rotation params
-GLfloat sun_rotation = 1;
-GLfloat dx_sun_rotation = 0.9;
+GLfloat sun_rotation = 0.0f;
+GLfloat dx_sun_rotation = 1.0f;
 
-GLfloat light0_pos[] = {0, 0, 1, 1};
-GLfloat light0_diffuse[] = {1.0, 1.0, 1.0};
+GLfloat light0_pos[] = {0.0f, 0.0f, 1.0f, 1.0f};
+GLfloat light0_diffuse[] = {1.0f, 1.0f, 1.0f};
 
-GLfloat opened = 0; // splitting octahedron faces
+GLfloat indent_size = 0.0f; // splitting octahedron faces
 const GLfloat oct_side_len = 2.0f;
 
+// Current position
 GLfloat ox_rotation = 0.0f;
-GLfloat dx_rotation = 0.5f;
 GLfloat oy_rotation = 0.0f;
+
+// The value of position change
+GLfloat dx_rotation = 0.5f;
 GLfloat dy_rotation = 0.0f;
 
 bool visibility = true;
 bool light = true;
 bool cut_oct = false;
+bool sphere_manage_direction = false;
 
 enum class COLOR_MODE : int {
     COLOR = 0,
@@ -43,11 +47,25 @@ namespace KEY {
     const char OPEN_OCT = 'o';
     const char LIGHT_MODE = 'l';
     const char CUT_OCT = 'c';
-    const char STOP = 'q';
+    const char STOP_OCT = 'q';
+    const char STOP_SUN = 'u';
     const char TURN_UP = 'w';
     const char TURN_DOWN = 's';
     const char TURN_LEFT = 'a';
     const char TURN_RIGHT = 'd';
+    const char SPHERE_MANAGE = 'y';
+    const char EXIT = 27;
+}
+
+namespace OCT_FACES {
+    const GLubyte front_face[] = {0, 1, 2};
+    const GLubyte right_side[] = {3, 4, 5};
+    const GLubyte back_face[] = {6, 7, 8};
+    const GLubyte left_side[] = {9, 10, 11};
+    const GLubyte lower_front[] = {12, 13, 14};
+    const GLubyte lower_right_side[] = {15, 16, 17};
+    const GLubyte lower_back_face[] = {18, 19, 20};
+    const GLubyte lower_left_side[] = {21, 22, 23};
 }
 
 COLOR_MODE texture_mode = COLOR_MODE::COLOR;
@@ -86,19 +104,110 @@ const GLfloat oct_normals[] = {
         -1.0f, -1.0f, -1.0f,
 };
 
+GLfloat oct_textures_coordinates[] = {
+        0.0, 0.0,  // Lower left corner
+        1.0, 0.0,  // Lower right corner
+        0.5, 1.0,  // Upper center side
+        0.0, 0.0,
+        1.0, 0.0,
+        0.5, 1.0,
+        0.0, 0.0,
+        1.0, 0.0,
+        0.5, 1.0,
+        0.0, 0.0,
+        1.0, 0.0,
+        0.5, 1.0,
+        0.0, 0.0,
+        1.0, 0.0,
+        0.5, 1.0,
+        0.0, 0.0,
+        1.0, 0.0,
+        0.5, 1.0,
+        0.0, 0.0,
+        1.0, 0.0,
+        0.5, 1.0,
+        0.0, 0.0,
+        1.0, 0.0,
+        0.5, 1.0
+};
+
+
 void draw_colored_oct();
 
 void draw_cut_triangles(GLuint);
 
-void Draw();
+void draw();
 
 void create_cut_triangles_list(GLuint, GLfloat, GLfloat= 0);
 
 void change_size(GLsizei, GLsizei);
 
-void timer(int);
+void redisplay();
 
 void glutNormalKeys(unsigned char, int, int);
+
+void textures_init();
+
+void light_init();
+
+
+
+
+void init(){
+    glClearColor(0, 0, 0, 0);
+    glEnable(GL_DEPTH_TEST);
+
+    textures_init();
+    light_init();
+}
+
+int main(int argc, char **argv) {
+    using namespace KEY;
+    std::cout << TURN_UP << " - turn up\n"
+              << TURN_DOWN << " - turn down\n"
+              << TURN_LEFT << " - turn left\n"
+              << TURN_RIGHT << " - turn right\n"
+              << STOP_OCT << " - stop octahedron rotation\n"
+              << STOP_SUN << " - manage sun rotation\n"
+              << OPEN_OCT << " - open octahedron\n"
+              << TEXTURE << " - enumerate texture mods\n"
+              << VISIBLE << " - transparency control\n"
+              << LIGHT_MODE << " - light control\n"
+              << CUT_OCT << " - cut octahedron faces\n"
+              << SPHERE_MANAGE << " - manage sun direction\n"
+              << "Esc" << " - exit\n";
+
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+
+    glutInitWindowSize(WIN_WIDTH, WIN_HEIGHT);
+    glutCreateWindow("Octahedron");
+
+    // Cut octahedron preparation
+    GLfloat opened_part_length = oct_side_len / PARTITIONS_NUMBER;
+    cutOctahedron = glGenLists(2);
+    create_cut_triangles_list(cutOctahedron, opened_part_length);
+    glEndList();
+
+    // Opened version of the cut octahedron
+    cutOctahedronOpened = cutOctahedron + 1;
+    create_cut_triangles_list(cutOctahedronOpened, opened_part_length, 0.1f);
+    glEndList();
+
+    // Callback functions init
+    glutDisplayFunc(draw);
+    glutIdleFunc(redisplay);
+    glutReshapeFunc(change_size);
+    glutKeyboardFunc(glutNormalKeys);
+
+    init();
+
+    glutMainLoop();
+
+    return 0;
+}
+
+
 
 
 void textures_init() {
@@ -132,10 +241,6 @@ void textures_init() {
 }
 
 void light_init() {
-    glClearColor(0, 0, 0, 0);
-
-    glEnable(GL_DEPTH_TEST);
-
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
@@ -144,52 +249,12 @@ void light_init() {
     glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
 }
 
-int main(int argc, char **argv) {
-    using namespace KEY;
-    std::cout << TURN_UP << " - turn up\n"
-              << TURN_DOWN << " - turn down\n"
-              << TURN_LEFT << " - turn left\n"
-              << TURN_RIGHT << " - turn right\n"
-              << STOP << " - stop rotation\n"
-              << OPEN_OCT << " - open octahedron\n"
-              << TEXTURE << " - enumerate texture mods\n"
-              << VISIBLE << " - transparency control\n"
-              << LIGHT_MODE << " - light control\n"
-              << CUT_OCT << " - cut octahedron faces\n";
-
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-
-    glutInitWindowSize(WIN_WIDTH, WIN_HEIGHT);
-    glutCreateWindow("Octahedron");
-
-    // Cut octahedron preparation
-    GLfloat opened_part_length = oct_side_len / PARTITIONS_NUMBER;
-    cutOctahedron = glGenLists(2);
-    create_cut_triangles_list(cutOctahedron, opened_part_length);
-    glEndList();
-
-    // Opened version of the cut octahedron
-    cutOctahedronOpened = cutOctahedron + 1;
-    create_cut_triangles_list(cutOctahedronOpened, opened_part_length, 0.1f);
-    glEndList();
-
-    // Callback functions init
-    glutDisplayFunc(Draw);
-    glutReshapeFunc(change_size);
-    glutTimerFunc(5, timer, 0);
-    glutKeyboardFunc(glutNormalKeys);
-
-    light_init();
-    textures_init();
 
 
-    glutMainLoop();
-
-    return 0;
-}
 
 void draw_colored_oct() {
+    using namespace OCT_FACES;
+
     glLoadIdentity();
 
     glTranslatef(0, 0, -5); // Moving the object along z to "stretch" the octahedron
@@ -198,82 +263,48 @@ void draw_colored_oct() {
 
     // This one maybe calculated automatic but I don't want to do this
     GLfloat oct_vertices[] = {
-            -oct_side_len - opened, 0.0f + opened, 0.0f + opened, //0 front face
-            0.0f - opened, oct_side_len + opened, 0.0f + opened,  //1
-            0.0f - opened, 0.0f + opened, oct_side_len + opened,  //2
+            -oct_side_len - indent_size, 0.0f + indent_size, 0.0f + indent_size, //0 front face
+            0.0f - indent_size, oct_side_len + indent_size, 0.0f + indent_size,  //1
+            0.0f - indent_size, 0.0f + indent_size, oct_side_len + indent_size,  //2
 
-            0.0f + opened, 0.0f + opened, oct_side_len + opened,  //2 right side face
-            0.0f + opened, oct_side_len + opened, 0.0f + opened,  //1
-            oct_side_len + opened, 0.0f + opened, 0.0f + opened,  //3
+            0.0f + indent_size, 0.0f + indent_size, oct_side_len + indent_size,  //2 right side face
+            0.0f + indent_size, oct_side_len + indent_size, 0.0f + indent_size,  //1
+            oct_side_len + indent_size, 0.0f + indent_size, 0.0f + indent_size,  //3
 
-            oct_side_len + opened, 0.0f + opened, 0.0f - opened,  //3 back face
-            0.0f + opened, oct_side_len + opened, 0.0f - opened,  //1
-            0.0f + opened, 0.0f + opened, -oct_side_len - opened, //4
+            oct_side_len + indent_size, 0.0f + indent_size, 0.0f - indent_size,  //3 back face
+            0.0f + indent_size, oct_side_len + indent_size, 0.0f - indent_size,  //1
+            0.0f + indent_size, 0.0f + indent_size, -oct_side_len - indent_size, //4
 
-            0.0f - opened, 0.0f + opened, -oct_side_len - opened, //4 left side face
-            0.0f - opened, oct_side_len + opened, 0.0f - opened,  //1
-            -oct_side_len - opened, 0.0f + opened, 0.0f - opened, //0
+            0.0f - indent_size, 0.0f + indent_size, -oct_side_len - indent_size, //4 left side face
+            0.0f - indent_size, oct_side_len + indent_size, 0.0f - indent_size,  //1
+            -oct_side_len - indent_size, 0.0f + indent_size, 0.0f - indent_size, //0
 
-            -oct_side_len - opened, 0.0f - opened, 0.0f + opened, //0 lower front face
-            0.0f - opened, -oct_side_len - opened, 0.0f + opened, //5
-            0.0f - opened, 0.0f - opened, oct_side_len + opened,  //2
+            -oct_side_len - indent_size, 0.0f - indent_size, 0.0f + indent_size, //0 lower front face
+            0.0f - indent_size, -oct_side_len - indent_size, 0.0f + indent_size, //5
+            0.0f - indent_size, 0.0f - indent_size, oct_side_len + indent_size,  //2
 
-            0.0f + opened, 0.0f - opened, oct_side_len + opened,  //2 lower right side face
-            0.0f + opened, -oct_side_len - opened, 0.0f + opened, //5
-            oct_side_len + opened, 0.0f - opened, 0.0f + opened,  //3
+            0.0f + indent_size, 0.0f - indent_size, oct_side_len + indent_size,  //2 lower right side face
+            0.0f + indent_size, -oct_side_len - indent_size, 0.0f + indent_size, //5
+            oct_side_len + indent_size, 0.0f - indent_size, 0.0f + indent_size,  //3
 
-            oct_side_len + opened, 0.0f - opened, 0.0f - opened,  //3 lower back face
-            0.0f + opened, -oct_side_len - opened, 0.0f - opened, //5
-            0.0f + opened, 0.0f - opened, -oct_side_len - opened, //4
+            oct_side_len + indent_size, 0.0f - indent_size, 0.0f - indent_size,  //3 lower back face
+            0.0f + indent_size, -oct_side_len - indent_size, 0.0f - indent_size, //5
+            0.0f + indent_size, 0.0f - indent_size, -oct_side_len - indent_size, //4
 
-            0.0f - opened, 0.0f - opened, -oct_side_len - opened, // lower left side face
-            0.0f - opened, -oct_side_len - opened, 0.0f - opened,
-            -oct_side_len - opened, 0.0f - opened, 0.0f - opened,
+            0.0f - indent_size, 0.0f - indent_size, -oct_side_len - indent_size, // lower left side face
+            0.0f - indent_size, -oct_side_len - indent_size, 0.0f - indent_size,
+            -oct_side_len - indent_size, 0.0f - indent_size, 0.0f - indent_size,
     };
 
 
-    GLfloat texCoords[] = {0.0, 0.0,  // Lower left corner
-                           1.0, 0.0,  // Lower right corner
-                           0.5, 1.0,  // Upper center side
-                           0.0, 0.0,
-                           1.0, 0.0,
-                           0.5, 1.0,
-                           0.0, 0.0,
-                           1.0, 0.0,
-                           0.5, 1.0,
-                           0.0, 0.0,
-                           1.0, 0.0,
-                           0.5, 1.0,
-                           0.0, 0.0,
-                           1.0, 0.0,
-                           0.5, 1.0,
-                           0.0, 0.0,
-                           1.0, 0.0,
-                           0.5, 1.0,
-                           0.0, 0.0,
-                           1.0, 0.0,
-                           0.5, 1.0,
-                           0.0, 0.0,
-                           1.0, 0.0,
-                           0.5, 1.0,};
-
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
+    glTexCoordPointer(2, GL_FLOAT, 0, oct_textures_coordinates);
 
     glVertexPointer(3, GL_FLOAT, 0, oct_vertices);
     glNormalPointer(GL_FLOAT, 0, oct_normals);
 
-    const GLubyte front_face[] = {0, 1, 2};
-    const GLubyte right_side[] = {3, 4, 5};
-    const GLubyte back_face[] = {6, 7, 8};
-    const GLubyte left_side[] = {9, 10, 11};
-    const GLubyte lower_front[] = {12, 13, 14};
-    const GLubyte lower_right_side[] = {15, 16, 17};
-    const GLubyte lower_back_face[] = {18, 19, 20};
-    const GLubyte lower_left_side[] = {21, 22, 23};
 
     switch (texture_mode) {
         case COLOR_MODE::COLOR:
@@ -376,6 +407,8 @@ void draw_colored_oct() {
             break;
     }
 
+
+
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -394,7 +427,7 @@ void draw_cut_triangles(GLuint display_list) {
     glCallList(display_list);
 }
 
-void Draw() {
+void draw() {
     glDepthMask(GL_TRUE); // Opengl 4.6 reshape bug fix
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -412,12 +445,13 @@ void Draw() {
     if (!cut_oct)
         draw_colored_oct();
     else
-        opened == 0 ? draw_cut_triangles(cutOctahedron) : draw_cut_triangles(cutOctahedronOpened);
+        indent_size == 0 ? draw_cut_triangles(cutOctahedron) : draw_cut_triangles(cutOctahedronOpened);
 
     // Light and sphere
     glLoadIdentity();
+
     glTranslatef(0, 0, -12);  // Camera side
-    glRotatef((sun_rotation), 0, 1, 0);
+    glRotatef(sun_rotation, 0, 1, 0);
     glTranslatef(0, 0, -10);  // Octahedron side
 
     glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
@@ -605,42 +639,50 @@ void change_size(GLsizei w, GLsizei h) {
     glMatrixMode(GL_MODELVIEW);
     glViewport(0, 0, (GLdouble) w, (GLdouble) h);
 
-    Draw();
+    draw();
 }
 
-void timer(int = 0) {
-    glutPostRedisplay();
-    glutTimerFunc(13, timer, 1);
-
+void redisplay() {
     ox_rotation += dx_rotation;
     oy_rotation += dy_rotation;
 
-    sun_rotation += dx_sun_rotation;
+    !sphere_manage_direction ? sun_rotation += dx_sun_rotation : sun_rotation -= dx_sun_rotation;
+    if (abs(sun_rotation) >= 360)
+        sun_rotation = abs(sun_rotation) - 360;
+
+    glutPostRedisplay();
 }
 
 void glutNormalKeys(unsigned char key, int x, int y) {
     switch (key) {
         case KEY::TURN_UP:
-            dy_rotation = -0.5;
+            dy_rotation = 0.5f;
+            dx_rotation = 0.0f;
             break;
         case KEY::TURN_LEFT:
-            dx_rotation = -0.5;
+            dx_rotation = -0.5f;
+            dy_rotation = 0.0f;
             break;
         case KEY::TURN_DOWN:
-            dy_rotation = 0.5;
+            dy_rotation = -0.5f;
+            dx_rotation = 0.0f;
             break;
         case KEY::TURN_RIGHT:
-            dx_rotation = 0.5;
+            dx_rotation = 0.5f;
+            dy_rotation = 0.0f;
             break;
-        case KEY::STOP:
-            dx_rotation = 0;
-            dy_rotation = 0;
+        case KEY::STOP_OCT:
+            dx_rotation = 0.0f;
+            dy_rotation = 0.0f;
+            break;
+        case KEY::STOP_SUN:
+            dx_sun_rotation = dx_sun_rotation == 0.0f ? 1.0f : 0.0f;
             break;
         case KEY::OPEN_OCT:
-            if (!opened)
-                opened = 0.2;
+            if (!indent_size)
+                indent_size = 0.2f;
             else
-                opened = 0;
+                indent_size = 0.0f;
 
             break;
         case KEY::TEXTURE:
@@ -667,6 +709,11 @@ void glutNormalKeys(unsigned char key, int x, int y) {
         case KEY::CUT_OCT:
             cut_oct = !cut_oct;
             break;
+        case KEY::SPHERE_MANAGE:
+            sphere_manage_direction = !sphere_manage_direction;
+            break;
+        case KEY::EXIT:
+            exit(0);
         default:
             break;
     }
